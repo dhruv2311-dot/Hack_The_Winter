@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import cors from "cors";
 import connectDB from "./config/db.js";
 import authRoutes from "./routes/AuthRoutes.js";
+import ngoRoutes from "./routes/NgoRoutes.js";
 
 dotenv.config();
 connectDB();
@@ -13,6 +14,7 @@ app.use(cors());
 app.use(express.json());
 
 app.use("/api/auth", authRoutes);
+app.use("/api/ngo",ngoRoutes);
 
 app.get("/", (req, res) => {
   res.send("SEBN Backend Running 🚀");
