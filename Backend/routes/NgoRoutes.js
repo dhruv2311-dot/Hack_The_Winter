@@ -1,25 +1,74 @@
 import express from "express";
 import {
+  // Camp Management
   createCamp,
   getMyCamps,
+  getCampById,
+  updateCamp,
+  deleteCamp,
+  // Slot Management
   createSlot,
-  getCampSlots,
-  registerDonorToSlot
+  getSlotsByCamp,
+  updateSlot,
+  deleteSlot,
+  // Registration Management
+  registerDonorToSlot,
+  getMyRegistrations,
+  getCampRegistrations,
+  cancelRegistration
 } from "../controllers/NgoController.js";
 
-import auth from "../middleware/auth.middleware.js";
-import role from "../middleware/role.middleware.js";
+import authMiddleware from "../middleware/auth.middleware.js";
+import roleMiddleware from "../middleware/role.middleware.js";
 
 const router = express.Router();
 
-router.use(auth);
+// Apply auth middleware to all routes
+router.use(authMiddleware);
 
-router.post("/camp", role("ngo"), createCamp);
-router.get("/camp", role("ngo"), getMyCamps);
+// ============= CAMP ROUTES =============
 
-router.post("/slot", role("ngo"), createSlot);
-router.get("/camp/:campId/slots", getCampSlots);
+// Create camp (NGO only)
+router.post("/camp", roleMiddleware(["ngo"]), createCamp);
 
-router.post("/camp/register", role("user"), registerDonorToSlot);
+// Get all my camps (NGO only)
+router.get("/camp", roleMiddleware(["ngo"]), getMyCamps);
+
+// Get camp by ID
+router.get("/camp/:campId", getCampById);
+
+// Update camp (NGO owner only)
+router.put("/camp/:campId", roleMiddleware(["ngo"]), updateCamp);
+
+// Delete camp (NGO owner only)
+router.delete("/camp/:campId", roleMiddleware(["ngo"]), deleteCamp);
+
+// ============= SLOT ROUTES =============
+
+// Create slot for camp (NGO owner only)
+router.post("/slot", roleMiddleware(["ngo"]), createSlot);
+
+// Get all slots for a camp
+router.get("/camp/:campId/slots", getSlotsByCamp);
+
+// Update slot (NGO owner only)
+router.put("/slot/:slotId", roleMiddleware(["ngo"]), updateSlot);
+
+// Delete slot (NGO owner only)
+router.delete("/slot/:slotId", roleMiddleware(["ngo"]), deleteSlot);
+
+// ============= REGISTRATION ROUTES =============
+
+// Register donor to camp slot (Donor/User only)
+router.post("/register", roleMiddleware(["user"]), registerDonorToSlot);
+
+// Get my registrations (Donor specific)
+router.get("/registrations", roleMiddleware(["user"]), getMyRegistrations);
+
+// Get all registrations for a camp (NGO owner only)
+router.get("/camp/:campId/registrations", roleMiddleware(["ngo"]), getCampRegistrations);
+
+// Cancel registration (Donor can cancel their own)
+router.delete("/registration/:registrationId", roleMiddleware(["user"]), cancelRegistration);
 
 export default router;

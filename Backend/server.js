@@ -1,26 +1,55 @@
-import express from "express";
 import dotenv from "dotenv";
-import cors from "cors";
-import connectDB from "./config/db.js";
-import authRoutes from "./routes/AuthRoutes.js";
-import ngoRoutes from "./routes/NgoRoutes.js";
+import { connectDB, disconnectDB } from "./config/db.js";
+import app from "./app.js";
 
 dotenv.config();
-connectDB();
-
-const app = express();
-
-app.use(cors());
-app.use(express.json());
-
-app.use("/api/auth", authRoutes);
-app.use("/api/ngo",ngoRoutes);
-
-app.get("/", (req, res) => {
-  res.send("SEBN Backend Running 🚀");
-});
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () =>
-  console.log(`🚀 Server running on port ${PORT}`)
-);
+
+/**
+ * Start server
+ */
+const startServer = async () => {
+  try {
+    // Connect to MongoDB
+    await connectDB();
+
+    // Start Express server
+    const server = app.listen(PORT, () => {
+      console.log(`
+╔═══════════════════════════════════════════════╗
+║                                               ║
+║   🚀 SEBN Backend Server Started              ║
+║   ✅ Port: ${PORT}                            ║
+║   ✅ Environment: ${process.env.NODE_ENV || "development"}                  ║
+║   ✅ Database: MongoDB                        ║
+║                                               ║
+╚═══════════════════════════════════════════════╝
+      `);
+    });
+
+    // Graceful shutdown
+    process.on("SIGINT", async () => {
+      console.log("\n🛑 Shutting down gracefully...");
+      server.close(async () => {
+        await disconnectDB();
+        console.log("✅ Server closed");
+        process.exit(0);
+      });
+    });
+
+    process.on("SIGTERM", async () => {
+      console.log("\n🛑 Shutting down gracefully...");
+      server.close(async () => {
+        await disconnectDB();
+        console.log("✅ Server closed");
+        process.exit(0);
+      });
+    });
+  } catch (error) {
+    console.error("❌ Failed to start server:", error.message);
+    process.exit(1);
+  }
+};
+
+startServer();
