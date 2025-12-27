@@ -87,7 +87,7 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-700">
+    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-slate-900 to-slate-700">
       <div className="w-full max-w-md bg-white p-8 rounded-xl shadow-2xl">
         <h2 className="text-2xl font-bold text-center text-slate-700 mb-6">
           Login
