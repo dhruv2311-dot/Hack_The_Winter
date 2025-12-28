@@ -1,5 +1,5 @@
 import bcrypt from "bcryptjs";
-import { Organization } from "../../models/Organization.js";
+import { Organization } from "../../models/organization/Organization.js";
 import {
   generateOrganizationCode,
   generateRegistrationCode

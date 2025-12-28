@@ -1,7 +1,18 @@
 /**
  * Role-based Access Control Middleware
- * Supports both array and variadic arguments
- * Usage: roleMiddleware(["admin", "ngo"]) or roleMiddleware("admin", "ngo")
+ * Ensures user has required role within their organization
+ * 
+ * Usage:
+ * app.post('/api/admin/...',
+ *   authMiddleware,
+ *   organizationAuthMiddleware,
+ *   roleMiddleware(["Admin"]),
+ *   controller
+ * )
+ * 
+ * Supports both array and variadic arguments:
+ * roleMiddleware(["admin", "director"])
+ * roleMiddleware("admin", "director")
  */
 const roleMiddleware = (allowedRolesInput) => {
   // Handle both array and variadic arguments
@@ -12,22 +23,36 @@ const roleMiddleware = (allowedRolesInput) => {
   return (req, res, next) => {
     try {
       if (!req.user) {
+        console.warn("[ROLE_MIDDLEWARE] User not found in request");
         return res.status(403).json({ 
           success: false, 
           message: "User information not found" 
         });
       }
 
-      if (!allowedRoles.includes(req.user.role)) {
+      const userRole = req.user.role;
+      const userCode = req.user.userCode;
+      const orgCode = req.user.organizationCode;
+
+      if (!allowedRoles.includes(userRole)) {
+        console.warn(
+          `[ROLE_MIDDLEWARE] Access denied - User ${userCode} (${userRole}) ` +
+          `from ${orgCode} attempted to access resource requiring ${allowedRoles.join(", ")}`
+        );
         return res.status(403).json({ 
           success: false, 
-          message: "You don't have permission to access this resource" 
+          message: `This action requires role(s): ${allowedRoles.join(", ")}. You have role: ${userRole}` 
         });
       }
 
+      console.log(
+        `[ROLE_MIDDLEWARE] User ${userCode} (${userRole}) ` +
+        `authorized to access resource in ${orgCode}`
+      );
+
       next();
     } catch (error) {
-      console.error("Role middleware error:", error);
+      console.error("[ROLE_MIDDLEWARE] Error:", error);
       res.status(403).json({ 
         success: false, 
         message: "Authorization check failed" 

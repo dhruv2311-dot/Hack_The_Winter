@@ -1,4 +1,4 @@
-import { Approval } from "../models/Approval.js";
+import { Approval } from "../../models/admin/Approval.js";
 
 // ============= VALIDATORS =============
 

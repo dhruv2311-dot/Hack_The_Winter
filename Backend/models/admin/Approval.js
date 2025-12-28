@@ -1,8 +1,8 @@
-import { ObjectId } from "mongodb";
-import { getDB } from "../config/db.js";
+import { getDB } from "../../config/db.js";
 import bcrypt from "bcryptjs";
-import User from "./User.js";
-import { generateUserCode } from "../utils/codeGenerator.js";
+import { ObjectId } from "mongodb";
+import User from "../User.js";
+import { generateUserCode } from "../../utils/codeGenerator.js";
 
 export class Approval {
   /**
@@ -134,6 +134,8 @@ export class Approval {
       const organizationAdminUser = {
         _id: new ObjectId(),
         organizationCode: organizationCode,
+        organizationName: org.name,
+        organizationType: org.type,
         userCode: userCode,
         name: adminData.name,
         email: adminData.email,

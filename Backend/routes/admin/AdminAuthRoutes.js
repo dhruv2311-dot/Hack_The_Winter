@@ -4,10 +4,10 @@ import {
   getAdminProfile,
   adminLogout,
   adminRegister
-} from "../controllers/admin/AdminAuthController.js";
+} from "../../controllers/admin/AdminAuthController.js";
 
-import adminAuthMiddleware from "../middleware/adminAuth.middleware.js";
-import { loginLimiter } from "../middleware/rateLimiter.js";
+import adminAuthMiddleware from "../../middleware/adminAuth.middleware.js";
+import { loginLimiter } from "../../middleware/rateLimiter.js";
 
 const router = express.Router();
 

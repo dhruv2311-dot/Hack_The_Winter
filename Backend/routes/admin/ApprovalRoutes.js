@@ -10,9 +10,9 @@ import {
   approveOrganization,
   rejectOrganization,
   suspendOrganization
-} from "../controllers/ApprovalController.js";
+} from "../../controllers/admin/ApprovalController.js";
 
-import adminAuthMiddleware from "../middleware/adminAuth.middleware.js";
+import adminAuthMiddleware from "../../middleware/adminAuth.middleware.js";
 
 const router = express.Router();
 

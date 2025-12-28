@@ -6,9 +6,10 @@ import dotenv from "dotenv";
 import authRoutes from "./routes/AuthRoutes.js";
 import ngoRoutes from "./routes/NgoRoutes.js";
 import donorRoutes from "./routes/DonorRoutes.js";
-import adminAuthRoutes from "./routes/AdminAuthRoutes.js";
-import approvalRoutes from "./routes/ApprovalRoutes.js";
+import adminAuthRoutes from "./routes/admin/AdminAuthRoutes.js";
+import approvalRoutes from "./routes/admin/ApprovalRoutes.js";
 import orgRegistrationRoutes from "./routes/organization/OrganizationRegistrationRoutes.js";
+import orgUsersRoutes from "./routes/organization/OrganizationUsersRoutes.js";
 
 
 // Import middleware
@@ -59,6 +60,7 @@ app.use("/api/auth/org", orgRegistrationRoutes);  // ← Organization registrati
 app.use("/api/auth", authRoutes);
 app.use("/api/admin/auth", adminAuthRoutes);
 app.use("/api/admin/approvals", approvalRoutes);
+app.use("/api/organization-users", orgUsersRoutes);  // ← Organization users
 app.use("/api/ngo", authMiddleware, ngoRoutes);
 app.use("/api/donor", donorRoutes);
 
