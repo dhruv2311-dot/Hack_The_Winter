@@ -1,8 +1,11 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
+import OrganizationPage from "./pages/OrganizationPage";
 import Login from "./pages/Login";
 import SuperAdminLogin from "./pages/SuperAdminLogin";
 import Register from "./pages/Register";
+import OrganizationRegistration from "./pages/OrganizationRegistration";
+import RegistrationStatus from "./pages/RegistrationStatus";
 import BloodBankLayout from "./layouts/BloodBankLayout";
 import DashboardOverview from "./pages/bloodbank/DashboardOverview";
 import HospitalRequests from "./pages/bloodbank/HospitalRequests";
@@ -52,10 +55,13 @@ export default function App() {
         }}
       />
       <Routes>
-        <Route path="/" element={<Navigate to="/login" />} />
+        <Route path="/" element={<Navigate to="/organization" />} />
+        <Route path="/organization" element={<OrganizationPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/superadmin-login" element={<SuperAdminLogin />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/organization-registration" element={<OrganizationRegistration />} />
+        <Route path="/registration-status" element={<RegistrationStatus />} />
 
         {/* Blood Bank Dashboard - Protected Routes */}
         <Route
