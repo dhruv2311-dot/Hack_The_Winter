@@ -65,7 +65,7 @@ app.get("/", (req, res) => {
 // API routes
 app.use("/api/auth/org", orgRegistrationRoutes);  // ← Organization registration
 app.use("/api/auth", authRoutes);
-app.use("/api/admin/auth", adminAuthRoutes);
+app.use("/api/superadmin/auth", adminAuthRoutes);
 app.use("/api/admin/approvals", approvalRoutes);
 app.use("/api/admin/hospitals", hospitalRoutes);
 app.use("/api/admin/bloodbanks", bloodBankRoutes);

@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import Login from "./pages/Login";
+import SuperAdminLogin from "./pages/SuperAdminLogin";
 import Register from "./pages/Register";
 import BloodBankLayout from "./layouts/BloodBankLayout";
 import DashboardOverview from "./pages/bloodbank/DashboardOverview";
@@ -53,13 +54,14 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Navigate to="/login" />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/superadmin-login" element={<SuperAdminLogin />} />
         <Route path="/register" element={<Register />} />
 
         {/* Blood Bank Dashboard - Protected Routes */}
         <Route
           path="/bloodbank"
           element={
-            <ProtectedRoute allowedRoles={["bloodbank"]}>
+            <ProtectedRoute allowedRoles={["bloodbank", "BLOODBANK","ADMIN"]}>
               <BloodBankLayout />
             </ProtectedRoute>
           }
@@ -77,7 +79,7 @@ export default function App() {
         <Route
           path="/hospital"
           element={
-            <ProtectedRoute allowedRoles={["hospital"]}>
+            <ProtectedRoute allowedRoles={["hospital", "HOSPITAL","ADMIN","Doctor"]}>
               <HospitalLayout />
             </ProtectedRoute>
           }
@@ -94,7 +96,7 @@ export default function App() {
         <Route
           path="/ngo/dashboard"
           element={
-            <ProtectedRoute allowedRoles={["ngo"]}>
+            <ProtectedRoute allowedRoles={["ngo", "NGO","ADMIN"]}>
               <NgoLayout />
             </ProtectedRoute>
           }
@@ -106,6 +108,21 @@ export default function App() {
           <Route path="donors" element={<NgoDonors />} />
           <Route path="connectivity" element={<NgoConnectivity />} />
         </Route>
+
+        {/* Superadmin Dashboard - Placeholder */}
+        <Route
+          path="/superadmin/dashboard"
+          element={
+            <ProtectedRoute allowedRoles={["SUPERADMIN"]}>
+              <div className="min-h-screen flex items-center justify-center bg-gray-100">
+                <div className="text-center">
+                  <h1 className="text-3xl font-bold text-gray-800 mb-4">Superadmin Dashboard</h1>
+                  <p className="text-gray-600">Coming soon...</p>
+                </div>
+              </div>
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </>
   );

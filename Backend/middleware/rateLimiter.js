@@ -1,8 +1,28 @@
 import rateLimit, { MemoryStore } from "express-rate-limit";
 
+// ============= RATE LIMITER CONFIGURATION =============
+// Check environment variable to enable/disable rate limiting
+// Set ENABLE_RATE_LIMIT=false in .env for development/testing
+const isRateLimitEnabled = process.env.ENABLE_RATE_LIMIT !== "false";
+
+// Middleware to conditionally apply rate limiting
+const conditionalRateLimit = (limiter) => {
+  return (req, res, next) => {
+    if (isRateLimitEnabled) {
+      limiter(req, res, next);
+    } else {
+      // Log that rate limiting is bypassed
+      console.log(`[RATE_LIMIT_DISABLED] ${req.method} ${req.path} - Rate limiting bypassed for development`);
+      next();
+    }
+  };
+};
+
 // ============= LOGIN RATE LIMITER =============
 // Prevents brute force attacks by limiting login attempts
-export const loginLimiter = rateLimit({
+// Default: 5 attempts per 15 minutes
+// Disable: Set ENABLE_RATE_LIMIT=false in .env
+const loginLimiterConfig = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 5, // Max 5 attempts per windowMs
   message: "Too many login attempts. Please try again in 15 minutes.",
@@ -21,9 +41,11 @@ export const loginLimiter = rateLimit({
   }
 });
 
+export const loginLimiter = conditionalRateLimit(loginLimiterConfig);
+
 // ============= GENERAL API RATE LIMITER =============
 // Moderate rate limiting for general API endpoints
-export const apiLimiter = rateLimit({
+const apiLimiterConfig = rateLimit({
   windowMs: 10 * 60 * 1000, // 10 minutes
   max: 100, // Max 100 requests per windowMs
   message: "Too many requests from this IP, please try again later.",
@@ -31,9 +53,11 @@ export const apiLimiter = rateLimit({
   legacyHeaders: false
 });
 
+export const apiLimiter = conditionalRateLimit(apiLimiterConfig);
+
 // ============= REGISTER RATE LIMITER =============
 // Strict rate limiting for registration endpoints
-export const registerLimiter = rateLimit({
+const registerLimiterConfig = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
   max: 5, // Max 5 registration attempts per hour
   message: "Too many accounts created from this IP, please try again after an hour.",
@@ -48,12 +72,16 @@ export const registerLimiter = rateLimit({
   }
 });
 
+export const registerLimiter = conditionalRateLimit(registerLimiterConfig);
+
 // ============= STRICT RATE LIMITER =============
 // Very strict rate limiting for sensitive operations
-export const strictLimiter = rateLimit({
+const strictLimiterConfig = rateLimit({
   windowMs: 60 * 1000, // 1 minute
   max: 3, // Max 3 requests per minute
   message: "Too many requests. Please try again later.",
   standardHeaders: true,
   legacyHeaders: false
 });
+
+export const strictLimiter = conditionalRateLimit(strictLimiterConfig);

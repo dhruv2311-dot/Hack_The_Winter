@@ -1,15 +1,14 @@
 import { useState } from "react";
-import { loginUser } from "../services/authApi";
+import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import toast from "react-hot-toast";
 
-export default function Login() {
+export default function AdminLogin() {
   const navigate = useNavigate();
   const { login } = useAuth();
 
   const [formData, setFormData] = useState({
-    organizationCode: "",
     email: "",
     password: ""
   });
@@ -35,11 +34,6 @@ export default function Login() {
 
     try {
       // Validate inputs
-      if (!formData.organizationCode.trim()) {
-        setErrors(["Organization code is required"]);
-        setLoading(false);
-        return;
-      }
       if (!formData.email.trim()) {
         setErrors(["Email is required"]);
         setLoading(false);
@@ -51,36 +45,31 @@ export default function Login() {
         return;
       }
 
-      // Call login API with organization code, email, and password
-      const res = await loginUser(formData);
+      // Call superadmin login API
+      const res = await axios.post("http://localhost:5000/api/superadmin/auth/login", formData);
 
-      // Backend returns: { success, message, token, user: { userCode, role, email, name, organizationCode, organizationType, ... } }
+      // Backend returns: { success, message, data: { token, admin: { email, adminCode, name, permissions, ... } } }
       if (res.data.success) {
-        const { token, user } = res.data;
+        const { token, admin } = res.data.data;
 
         // ✅ SAVE AUTH DATA using AuthContext
-        login(user, token);
+        const adminData = {
+          ...admin,
+          role: "SUPERADMIN", // Mark as superadmin
+          isSuperAdmin: true
+        };
+        login(adminData, token);
 
-        toast.success("Login successful! Redirecting...");
+        toast.success("Superadmin login successful! Redirecting...");
 
-        // 🔀 ORGANIZATION TYPE REDIRECT
-        // Redirect based on the organization type the user belongs to
+        // 🔀 REDIRECT TO ADMIN DASHBOARD
         setTimeout(() => {
-          const orgType = user.organizationType ? user.organizationType.toLowerCase() : "";
-          if (orgType === "hospital") {
-            navigate("/hospital");
-          } else if (orgType === "bloodbank") {
-            navigate("/bloodbank");
-          } else if (orgType === "ngo") {
-            navigate("/ngo/dashboard");
-          } else {
-            navigate("/login");
-          }
+          navigate("/superadmin/dashboard");
         }, 500);
       }
 
     } catch (err) {
-      console.error("Login error:", err);
+      console.error("Admin login error:", err);
       
       // Handle validation errors from backend
       if (err.response?.data?.errors && Array.isArray(err.response.data.errors)) {
@@ -95,17 +84,24 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-600 to-blue-800 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-700 to-purple-900 p-4">
       <div className="w-full max-w-md">
         {/* Card Container */}
         <div className="bg-white rounded-lg shadow-2xl p-8">
           {/* Header */}
           <div className="mb-8">
+            <div className="flex justify-center mb-4">
+              <div className="bg-purple-600 text-white p-3 rounded-full">
+                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" />
+                </svg>
+              </div>
+            </div>
             <h1 className="text-3xl font-bold text-gray-800 text-center mb-2">
-              Organization Login
+              Superadmin Login
             </h1>
             <p className="text-center text-gray-600 text-sm">
-              Login to access your organization dashboard
+              Global administrator access to manage all organizations
             </p>
           </div>
 
@@ -130,26 +126,6 @@ export default function Login() {
           {/* Login Form */}
           <form onSubmit={handleSubmit} className="space-y-5">
             
-            {/* Organization Code Input */}
-            <div>
-              <label htmlFor="organizationCode" className="block text-sm font-semibold text-gray-700 mb-2">
-                Organization Code
-              </label>
-              <input
-                id="organizationCode"
-                type="text"
-                name="organizationCode"
-                placeholder="e.g., HOSP-DEL-001"
-                value={formData.organizationCode}
-                onChange={handleChange}
-                disabled={loading}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:cursor-not-allowed transition"
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Your unique organization identifier
-              </p>
-            </div>
-
             {/* Email Input */}
             <div>
               <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2">
@@ -159,11 +135,11 @@ export default function Login() {
                 id="email"
                 type="email"
                 name="email"
-                placeholder="your.email@organization.com"
+                placeholder="admin@platform.com"
                 value={formData.email}
                 onChange={handleChange}
                 disabled={loading}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:cursor-not-allowed transition"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:bg-gray-50 disabled:cursor-not-allowed transition"
               />
             </div>
 
@@ -180,10 +156,10 @@ export default function Login() {
                 value={formData.password}
                 onChange={handleChange}
                 disabled={loading}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:cursor-not-allowed transition"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:bg-gray-50 disabled:cursor-not-allowed transition"
               />
               <p className="text-xs text-gray-500 mt-1">
-                Minimum 6 characters
+                Minimum 8 characters for security
               </p>
             </div>
 
@@ -191,7 +167,7 @@ export default function Login() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-blue-800 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg mt-6"
+              className="w-full bg-gradient-to-r from-purple-600 to-purple-700 text-white py-3 rounded-lg font-semibold hover:from-purple-700 hover:to-purple-800 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg mt-6"
             >
               {loading ? (
                 <div className="flex items-center justify-center gap-2">
@@ -199,29 +175,34 @@ export default function Login() {
                   <span>Logging in...</span>
                 </div>
               ) : (
-                "Login"
+                "Login as Superadmin"
               )}
             </button>
           </form>
 
-          {/* Footer Links */}
-          <div className="mt-8 pt-6 border-t border-gray-200">
+          {/* Divider */}
+          <div className="mt-6 pt-6 border-t border-gray-200">
             <p className="text-center text-sm text-gray-600">
-              Don't have an account?{" "}
+              Organization user?{" "}
               <button
-                onClick={() => navigate("/register")}
-                className="text-blue-600 font-semibold hover:text-blue-700 hover:underline transition"
+                onClick={() => navigate("/login")}
+                className="text-purple-600 font-semibold hover:text-purple-700 hover:underline transition"
               >
-                Register here
+                Login here
               </button>
             </p>
           </div>
 
-          {/* Info Box */}
-          <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-xs text-blue-700">
-              <strong>Note:</strong> Use the organization code provided by your administrator along with your credentials to login.
-            </p>
+          {/* Security Info Box */}
+          <div className="mt-6 p-4 bg-purple-50 border border-purple-200 rounded-lg">
+            <div className="flex gap-2">
+              <svg className="w-5 h-5 text-purple-700 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+              </svg>
+              <p className="text-xs text-purple-700">
+                <strong>Secure Area:</strong> This account has global access to all organizations. Keep credentials safe.
+              </p>
+            </div>
           </div>
         </div>
       </div>
