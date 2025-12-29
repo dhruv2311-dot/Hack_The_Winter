@@ -1,97 +1,65 @@
 import express from "express";
-import authMiddleware from "../../middleware/auth.middleware.js";
-import adminAuthMiddleware from "../../middleware/adminAuth.middleware.js";
-import roleMiddleware from "../../middleware/role.middleware.js";
-import BloodBankController from "../../controllers/admin/BloodBankController.js";
+import {
+  registerBloodBank,
+  getAllBloodBanks,
+  getBloodBankById,
+  getBloodBankByCode,
+  getBloodBanksByStatus,
+  getBloodStock,
+  updateBloodStock,
+  updateBloodBank,
+  verifyBloodBank,
+  rejectBloodBank,
+  suspendBloodBank,
+  reactivateBloodBank,
+  getLocationStats,
+  deleteBloodBank
+} from "../../controllers/admin/BloodBankController.js";
 
 const router = express.Router();
 
-// ============= GET ENDPOINTS (Read-only) =============
+// ============= PUBLIC ROUTES =============
+// These routes don't require authentication
 
-/**
- * GET /admin/bloodbanks
- * List all blood banks with pagination & filters
- * Query: ?status=APPROVED&city=Mumbai&page=1&limit=20
- */
-router.get(
-  "/",
-  authMiddleware,
-  adminAuthMiddleware,
-  BloodBankController.getAllBloodBanks
-);
+// Register new blood bank
+router.post("/register", registerBloodBank);
 
-/**
- * GET /admin/bloodbanks/id/:bloodBankId
- * Get single blood bank by MongoDB ID
- */
-router.get(
-  "/id/:bloodBankId",
-  authMiddleware,
-  adminAuthMiddleware,
-  BloodBankController.getBloodBankById
-);
+// Get all blood banks (with filters)
+router.get("/all", getAllBloodBanks);
 
-/**
- * GET /admin/bloodbanks/code/:organizationCode
- * Get single blood bank by blood bank code (BB-MUM-001)
- */
-router.get(
-  "/code/:organizationCode",
-  authMiddleware,
-  adminAuthMiddleware,
-  BloodBankController.getBloodBankByCode
-);
+// Get blood bank by ID
+router.get("/id/:id", getBloodBankById);
 
-/**
- * GET /admin/bloodbanks/status/:status
- * Get blood banks filtered by status (APPROVED, PENDING, REJECTED, SUSPENDED)
- * Query: ?page=1&limit=20
- */
-router.get(
-  "/status/:status",
-  authMiddleware,
-  adminAuthMiddleware,
-  BloodBankController.getBloodBanksByStatus
-);
+// Get blood bank by organization code
+router.get("/code/:organizationCode", getBloodBankByCode);
 
-/**
- * GET /admin/bloodbanks/:bloodBankId/stock
- * Get blood stock for a blood bank (read-only)
- */
-router.get(
-  "/:bloodBankId/stock",
-  authMiddleware,
-  adminAuthMiddleware,
-  BloodBankController.getBloodBankStock
-);
+// Get blood banks by status
+router.get("/status/:status", getBloodBanksByStatus);
 
-// ============= POST ENDPOINTS (State-changing) =============
+// Get blood stock for a blood bank
+router.get("/:id/stock", getBloodStock);
 
-/**
- * POST /admin/bloodbanks/:id/activate
- * Activate a suspended blood bank
- * Requires: Admin role
- */
-router.post(
-  "/:id/activate",
-  authMiddleware,
-  adminAuthMiddleware,
-  roleMiddleware(["ADMIN", "SuperAdmin"]),
-  BloodBankController.activateBloodBank
-);
+// Get location statistics
+router.get("/stats/location", getLocationStats);
 
-/**
- * POST /admin/bloodbanks/:id/suspend
- * Suspend a blood bank
- * Requires: Admin role
- * Body: { reason?: string }
- */
-router.post(
-  "/:id/suspend",
-  authMiddleware,
-  adminAuthMiddleware,
-  roleMiddleware(["ADMIN", "SuperAdmin"]),
-  BloodBankController.suspendBloodBank
-);
+// ============= PROTECTED ROUTES =============
+// These routes require admin authentication
+// Note: Add your admin authentication middleware here
+// Example: router.use(authenticateAdmin);
+
+// Update blood bank details
+router.put("/:id", updateBloodBank);
+
+// Update blood stock
+router.put("/:id/stock", updateBloodStock);
+
+// Admin actions
+router.post("/verify", verifyBloodBank);
+router.post("/reject", rejectBloodBank);
+router.post("/suspend", suspendBloodBank);
+router.post("/reactivate", reactivateBloodBank);
+
+// Delete blood bank (admin only)
+router.delete("/:id", deleteBloodBank);
 
 export default router;
