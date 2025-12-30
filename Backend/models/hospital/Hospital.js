@@ -288,7 +288,8 @@ class Hospital {
                 { _id: new ObjectId(id) },
                 { $set: { ...updateData, updatedAt: new Date() } }
             );
-            return result.modifiedCount > 0;
+            // Return true if document was found (matched), even if not modified
+            return result.matchedCount > 0;
         } catch (error) {
             console.error("Error updating hospital:", error);
             return false;
