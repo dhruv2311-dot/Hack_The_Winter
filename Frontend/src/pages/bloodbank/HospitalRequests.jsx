@@ -1,52 +1,13 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
+import {
+  getBloodBankRequests,
+  acceptBloodRequest,
+  rejectBloodRequest,
+  completeBloodRequest,
+} from "../../services/hospitalBloodRequestApi";
+import { getHospitalById } from "../../services/hospitalApi";
+import toast from "react-hot-toast";
 
-const initialRequests = [
-  {
-    _id: "req001",
-    hospitalName: "City Care Hospital",
-    bloodGroup: "O+",
-    unitsRequired: 3,
-    urgency: "CRITICAL",
-    status: "PENDING",
-    requestedAt: "2025-12-27T08:30:00Z",
-  },
-  {
-    _id: "req002",
-    hospitalName: "LifeLine Hospital",
-    bloodGroup: "A+",
-    unitsRequired: 2,
-    urgency: "HIGH",
-    status: "ACCEPTED",
-    requestedAt: "2025-12-26T15:10:00Z",
-  },
-  {
-    _id: "req003",
-    hospitalName: "Sunrise Multispeciality",
-    bloodGroup: "B-",
-    unitsRequired: 4,
-    urgency: "MEDIUM",
-    status: "PENDING",
-    requestedAt: "2025-12-25T07:05:00Z",
-  },
-  {
-    _id: "req004",
-    hospitalName: "Hopewell Clinic",
-    bloodGroup: "AB+",
-    unitsRequired: 1,
-    urgency: "LOW",
-    status: "COMPLETED",
-    requestedAt: "2025-12-20T10:45:00Z",
-  },
-  {
-    _id: "req005",
-    hospitalName: "Metro Heart Centre",
-    bloodGroup: "O-",
-    unitsRequired: 5,
-    urgency: "CRITICAL",
-    status: "PENDING",
-    requestedAt: "2025-12-27T10:15:00Z",
-  },
-];
 
 const statusBadgeStyles = {
   VERIFIED:
@@ -74,17 +35,104 @@ const formatDate = (iso) =>
     timeStyle: "short",
   }).format(new Date(iso));
 
+const normalizeRequests = (payload) => {
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.requests)) return payload.requests;
+  if (Array.isArray(payload?.data)) return payload.data;
+  return [];
+};
+
 export default function HospitalRequests() {
-  const [requests, setRequests] = useState(initialRequests);
+  const [loading, setLoading] = useState(true);
+  const [requests, setRequests] = useState([]);
+  const [hospitalNames, setHospitalNames] = useState({});
   const [requestStatusFilter, setRequestStatusFilter] = useState("ALL");
   const [requestUrgencyFilter, setRequestUrgencyFilter] = useState("ALL");
 
   const verificationStatus = "VERIFIED"; // This would come from context/state in real app
   const actionsLocked = verificationStatus !== "VERIFIED";
 
+  useEffect(() => {
+    fetchRequests();
+  }, []);
+
+  const fetchRequests = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("token");
+      const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+      const bloodBankId =
+        storedUser.organizationId ||
+        storedUser.bloodBankId ||
+        storedUser._id ||
+        storedUser.organization?._id;
+
+      if (!bloodBankId) {
+        toast.error("Blood bank ID not found. Please login again.");
+        setRequests([]);
+        return;
+      }
+
+      const response = await getBloodBankRequests(
+        bloodBankId,
+        { page: 1, limit: 200 },
+        token
+      );
+      const normalized = normalizeRequests(response.data?.data);
+
+      if (response.data?.success) {
+        setRequests(normalized);
+      } else {
+        setRequests([]);
+      }
+    } catch (error) {
+      console.error("Error fetching hospital requests:", error);
+      toast.error("Failed to load hospital requests");
+      setRequests([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const enrichHospitalNames = async () => {
+      const uniqueIds = [
+        ...new Set(
+          requests
+            .map((req) => req.hospitalId || req.hospital?._id)
+            .filter(Boolean)
+        ),
+      ].filter((id) => !hospitalNames[id]);
+
+      if (!uniqueIds.length) return;
+
+      try {
+        const results = await Promise.all(
+          uniqueIds.map((id) =>
+            getHospitalById(id)
+              .then((res) => ({ id, name: res.data?.data?.name }))
+              .catch(() => ({ id, name: null }))
+          )
+        );
+
+        setHospitalNames((prev) => {
+          const next = { ...prev };
+          results.forEach(({ id, name }) => {
+            if (name) next[id] = name;
+          });
+          return next;
+        });
+      } catch (error) {
+        console.error("Error fetching hospital details:", error);
+      }
+    };
+
+    enrichHospitalNames();
+  }, [requests, hospitalNames]);
+
   const filteredRequests = useMemo(
     () =>
-      requests.filter((req) => {
+      (requests || []).filter((req) => {
         const statusMatch =
           requestStatusFilter === "ALL" || req.status === requestStatusFilter;
         const urgencyMatch =
@@ -94,18 +142,73 @@ export default function HospitalRequests() {
     [requests, requestStatusFilter, requestUrgencyFilter]
   );
 
-  const handleRequestStatus = (id, nextStatus) => {
-    setRequests((prev) =>
-      prev.map((req) =>
-        req._id === id
-          ? {
-              ...req,
-              status: nextStatus,
-            }
-          : req
-      )
-    );
+    const handleRequestStatus = async (request, nextStatus) => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      toast.error("Session expired. Please login again.");
+      return;
+    }
+
+    try {
+      let response;
+
+      if (nextStatus === "ACCEPTED") {
+        response = await acceptBloodRequest(
+          request._id,
+          { bloodBankResponse: "Accepted via dashboard" },
+          token
+        );
+      } else if (nextStatus === "REJECTED") {
+        response = await rejectBloodRequest(
+          request._id,
+          { rejectionReason: "Rejected via dashboard" },
+          token
+        );
+      } else if (nextStatus === "COMPLETED") {
+        const unitsFulfilled =
+          request.unitsFulfilled || request.unitsRequired || 0;
+        response = await completeBloodRequest(
+          request._id,
+          { unitsFulfilled },
+          token
+        );
+      } else {
+        toast.error("Unsupported action");
+        return;
+      }
+
+      if (response.data?.success) {
+        const updatedRequest = response.data?.data;
+        setRequests((prev) =>
+          prev.map((req) =>
+            req._id === request._id
+              ? updatedRequest || { ...req, status: updatedRequest?.status || nextStatus }
+              : req
+          )
+        );
+        toast.success(`Request ${nextStatus.toLowerCase()} successfully`);
+        fetchRequests();
+      } else {
+        toast.error("Failed to update request status");
+      }
+    } catch (error) {
+      console.error("Error updating request status:", error);
+      toast.error("Failed to update request status");
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#ff4d6d] mx-auto"></div>
+          <p className="mt-4 text-[#7c4a5e]">Loading hospital requests...</p>
+        </div>
+      </div>
+    );
+  }
+
 
   return (
     <section className="space-y-6 rounded-3xl border border-white/80 bg-white/95 p-6 shadow-[0_25px_60px_rgba(241,122,146,0.18)]">
@@ -182,7 +285,12 @@ export default function HospitalRequests() {
                     : "border-l-4 border-l-transparent"
                 }`}
               >
-                <td className="px-6 py-4 font-semibold">{req.hospitalName}</td>
+                <td className="px-6 py-4 font-semibold">
+                  {req.hospitalName ||
+                    req.hospital?.name ||
+                    hospitalNames[req.hospitalId || req.hospital?._id] ||
+                    "Hospital"}
+                </td>
                 <td className="px-6 py-4">
                   <span className="rounded-full border border-pink-100 bg-pink-50 px-3 py-1 text-xs font-semibold text-[#ff4d6d]">
                     {req.bloodGroup}
@@ -217,7 +325,7 @@ export default function HospitalRequests() {
                         <button
                           disabled={actionsLocked}
                           onClick={() =>
-                            handleRequestStatus(req._id, "ACCEPTED")
+                            handleRequestStatus(req, "ACCEPTED")
                           }
                           className="rounded-full border border-emerald-200 px-4 py-1 text-xs font-semibold text-[#1b8a4b] transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-40"
                         >
@@ -226,7 +334,7 @@ export default function HospitalRequests() {
                         <button
                           disabled={actionsLocked}
                           onClick={() =>
-                            handleRequestStatus(req._id, "REJECTED")
+                            handleRequestStatus(req, "REJECTED")
                           }
                           className="rounded-full border border-[#f59ab3] px-4 py-1 text-xs font-semibold text-[#c5114d] transition hover:bg-pink-50 disabled:cursor-not-allowed disabled:opacity-40"
                         >
@@ -238,7 +346,7 @@ export default function HospitalRequests() {
                       <button
                         disabled={actionsLocked}
                         onClick={() =>
-                          handleRequestStatus(req._id, "COMPLETED")
+                          handleRequestStatus(req, "COMPLETED")
                         }
                         className="rounded-full border border-[#9dd4ff] px-4 py-1 text-xs font-semibold text-[#0f6fa6] transition hover:bg-sky-50 disabled:cursor-not-allowed disabled:opacity-40"
                       >

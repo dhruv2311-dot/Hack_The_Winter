@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+ import { useEffect, useState } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
@@ -11,22 +11,6 @@ const navItems = [
   { label: "Profile & Settings", path: "/bloodbank/profile-settings" },
 ];
 
-const profileSnapshot = {
-  name: "LifeCare Blood Bank",
-  licenseNumber: "BB-GJ-2021-4455",
-  email: "lifecare@bloodbank.com",
-  phone: "+91 9876543210",
-  city: "Ahmedabad",
-  verificationStatus: "VERIFIED",
-};
-
-const adminSnapshot = {
-  verificationStatus: "VERIFIED",
-  lastVerifiedBy: "System Admin",
-  message: "Your blood bank has been successfully verified.",
-  verifiedAt: "2025-12-20",
-};
-
 const statusBadgeStyles = {
   VERIFIED:
     "bg-[#ecf8ef] text-[#1f7a3a] border border-[#a2d8b3] shadow-[0_3px_12px_rgba(31,122,58,0.18)]",
@@ -38,8 +22,12 @@ const statusBadgeStyles = {
 
 export default function BloodBankLayout() {
   const location = useLocation();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth(); // ✅ Get user from AuthContext
   const [drawerOpen, setDrawerOpen] = useState(false);
+
+  // ✅ Use real user data from AuthContext
+  const organizationName = user?.organizationName || user?.name || "Blood Bank";
+  const verificationStatus = user?.verificationStatus || "VERIFIED";
 
   useEffect(() => {
     setDrawerOpen(false);
@@ -51,7 +39,7 @@ export default function BloodBankLayout() {
         <p className="text-xs uppercase tracking-wider text-white/70 font-medium">
           SEBN
         </p>
-        <h1 className="mt-3 text-2xl font-bold">Drop Bank</h1>
+        <h1 className="mt-3 text-2xl font-bold">{organizationName}</h1>
         <p className="text-sm text-white/80 mt-1">Blood Bank Command Deck</p>
       </div>
 
@@ -109,18 +97,18 @@ export default function BloodBankLayout() {
                 </button>
                 <div>
                   <p className="text-xs uppercase tracking-wider text-[#ff4d6d] font-medium">
-                    {profileSnapshot.city}
+                    {user?.organizationCode || "Blood Bank"}
                   </p>
                   <div className="mt-2 flex flex-wrap items-center gap-3">
                     <h2 className="text-2xl font-bold text-[#31101e]">
-                      {profileSnapshot.name}
+                      {organizationName}
                     </h2>
                     <span
                       className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                        statusBadgeStyles[adminSnapshot.verificationStatus]
+                        statusBadgeStyles[verificationStatus]
                       }`}
                     >
-                      {adminSnapshot.verificationStatus}
+                      {verificationStatus}
                     </span>
                   </div>
                   <p className="text-sm text-[#7c4a5e] mt-1">
@@ -148,15 +136,15 @@ export default function BloodBankLayout() {
 
           {/* Main Content Area - Nested Routes Render Here */}
           <main className="flex-1 px-4 py-8 md:px-10">
-            {adminSnapshot.verificationStatus !== "VERIFIED" && (
+            {verificationStatus !== "VERIFIED" && (
               <div
                 className={`mb-6 rounded-3xl border px-6 py-4 text-sm font-semibold ${
-                  adminSnapshot.verificationStatus === "SUSPENDED"
+                  verificationStatus === "SUSPENDED"
                     ? "border-[#ff4d6d]/40 bg-[#ffe2eb]"
                     : "border-[#f8c37b]/60 bg-[#fff5e7]"
                 }`}
               >
-                {adminSnapshot.verificationStatus === "SUSPENDED"
+                {verificationStatus === "SUSPENDED"
                   ? "Account suspended — operations locked until HQ reinstates the profile."
                   : "Verification pending — accepting requests and approving drives is paused."}
               </div>

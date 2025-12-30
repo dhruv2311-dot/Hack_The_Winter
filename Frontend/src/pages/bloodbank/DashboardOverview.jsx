@@ -1,90 +1,10 @@
-import { useMemo, useState } from "react";
-
-const initialOverviewStats = {
-  totalRequests: 18,
-  pendingRequests: 3,
-  completedSupplies: 15,
-  upcomingNgoDrives: 2,
-  verificationStatus: "VERIFIED",
-};
-
-const initialRequests = [
-  {
-    _id: "req001",
-    hospitalName: "City Care Hospital",
-    bloodGroup: "O+",
-    unitsRequired: 3,
-    urgency: "CRITICAL",
-    status: "PENDING",
-    requestedAt: "2025-12-27T08:30:00Z",
-  },
-  {
-    _id: "req002",
-    hospitalName: "LifeLine Hospital",
-    bloodGroup: "A+",
-    unitsRequired: 2,
-    urgency: "HIGH",
-    status: "ACCEPTED",
-    requestedAt: "2025-12-26T15:10:00Z",
-  },
-  {
-    _id: "req003",
-    hospitalName: "Sunrise Multispeciality",
-    bloodGroup: "B-",
-    unitsRequired: 4,
-    urgency: "MEDIUM",
-    status: "PENDING",
-    requestedAt: "2025-12-25T07:05:00Z",
-  },
-  {
-    _id: "req004",
-    hospitalName: "Hopewell Clinic",
-    bloodGroup: "AB+",
-    unitsRequired: 1,
-    urgency: "LOW",
-    status: "COMPLETED",
-    requestedAt: "2025-12-20T10:45:00Z",
-  },
-  {
-    _id: "req005",
-    hospitalName: "Metro Heart Centre",
-    bloodGroup: "O-",
-    unitsRequired: 5,
-    urgency: "CRITICAL",
-    status: "PENDING",
-    requestedAt: "2025-12-27T10:15:00Z",
-  },
-];
-
-const initialNgoDrives = [
-  {
-    _id: "drive001",
-    ngoName: "Red Drop Foundation",
-    driveDate: "2025-12-30",
-    location: "Ahmedabad",
-    expectedUnits: 20,
-    collectedUnits: 12,
-    status: "APPROVED",
-  },
-  {
-    _id: "drive002",
-    ngoName: "Helping Hands NGO",
-    driveDate: "2026-01-05",
-    location: "Surat",
-    expectedUnits: 15,
-    collectedUnits: 0,
-    status: "PENDING",
-  },
-  {
-    _id: "drive003",
-    ngoName: "Smile Trust",
-    driveDate: "2025-12-28",
-    location: "Vadodara",
-    expectedUnits: 25,
-    collectedUnits: 25,
-    status: "COMPLETED",
-  },
-];
+import { useMemo, useState, useEffect } from "react";
+import { getAllNgoDrives } from "../../services/bloodBankApi";
+import {
+  getBloodBankRequestStats,
+  getBloodBankRequests,
+} from "../../services/hospitalBloodRequestApi";
+import toast from "react-hot-toast";
 
 const quickActions = [
   { label: "Create Request", icon: "🩸" },
@@ -92,33 +12,150 @@ const quickActions = [
   { label: "Schedule Drive", icon: "📅" },
 ];
 
+const normalizeRequests = (payload) => {
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.requests)) return payload.requests;
+  if (Array.isArray(payload?.data)) return payload.data;
+  return [];
+};
+
 export default function DashboardOverview() {
-  const [requests] = useState(initialRequests);
-  const [ngoDrives] = useState(initialNgoDrives);
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    totalRequests: 0,
+    pendingRequests: 0,
+    completedSupplies: 0,
+    upcomingNgoDrives: 0,
+    verificationStatus: "VERIFIED",
+  });
+  const [requests, setRequests] = useState([]);
+  const [ngoDrives, setNgoDrives] = useState([]);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      
+      const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+      const bloodBankId =
+        storedUser.organizationId ||
+        storedUser.bloodBankId ||
+        storedUser._id ||
+        storedUser.organization?._id;
+
+      const token = localStorage.getItem("token");
+
+      if (!bloodBankId) {
+        toast.error("Blood bank ID not found. Please login again.");
+        return;
+      }
+
+      if (!token) {
+        toast.error("Session expired. Please login again.");
+        return;
+      }
+
+      // Fetch requests list + stats in parallel
+      let fetchedRequests = [];
+      let fetchedDrives = [];
+
+      try {
+        const [requestsRes, statsRes] = await Promise.all([
+          getBloodBankRequests(bloodBankId, { page: 1, limit: 200 }, token),
+          getBloodBankRequestStats(bloodBankId, token),
+        ]);
+
+        const normalized = normalizeRequests(requestsRes.data?.data);
+        fetchedRequests = normalized;
+        setRequests(normalized);
+
+        if (statsRes.data?.success) {
+          const statsPayload = statsRes.data?.data || {};
+          const totalRequestsCount =
+            statsPayload.total ?? normalized.length;
+          const pendingRequestsCount =
+            statsPayload.byStatus?.PENDING ??
+            normalized.filter((req) => req.status === "PENDING").length;
+          const completedSuppliesCount =
+            statsPayload.byStatus?.FULFILLED ??
+            normalized.filter((req) => req.status === "COMPLETED").length;
+
+          setStats((prev) => ({
+            ...prev,
+            totalRequests: totalRequestsCount,
+            pendingRequests: pendingRequestsCount,
+            completedSupplies: completedSuppliesCount,
+          }));
+        } else {
+          setStats((prev) => ({
+            ...prev,
+            totalRequests: normalized.length,
+            pendingRequests: normalized.filter((req) => req.status === "PENDING")
+              .length,
+            completedSupplies: normalized.filter(
+              (req) => req.status === "COMPLETED"
+            ).length,
+          }));
+        }
+      } catch (error) {
+        console.error("Error fetching blood requests:", error);
+        toast.error("Failed to load requests");
+      }
+
+      try {
+        const drivesRes = await getAllNgoDrives();
+        if (drivesRes.data?.success && Array.isArray(drivesRes.data?.data)) {
+          fetchedDrives = drivesRes.data.data;
+          setNgoDrives(fetchedDrives);
+        }
+      } catch (error) {
+        console.error("Error fetching drives:", error);
+      }
+
+      const upcomingDrivesCount = fetchedDrives.filter(
+        (drive) => new Date(drive.driveDate) >= new Date()
+      ).length;
+
+      setStats((prev) => ({
+        ...prev,
+        upcomingNgoDrives: upcomingDrivesCount,
+        verificationStatus: "VERIFIED",
+      }));
+
+    } catch (error) {
+      console.error("Error fetching dashboard data:", error);
+      toast.error("Failed to load some dashboard data");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const dashboardCards = useMemo(
     () => [
       {
         title: "Total Hospital Requests",
-        value: initialOverviewStats.totalRequests,
+        value: stats.totalRequests,
         meta: `${requests.length} active on desk`,
         accent: "from-[#7c0d16] to-[#b71d24]",
       },
       {
         title: "Pending Requests",
-        value: initialOverviewStats.pendingRequests,
+        value: stats.pendingRequests,
         meta: `${requests.filter((r) => r.status === "PENDING").length} awaiting action`,
         accent: "from-[#d1661c] to-[#f2994a]",
       },
       {
         title: "Completed Supplies",
-        value: initialOverviewStats.completedSupplies,
+        value: stats.completedSupplies,
         meta: `${requests.filter((r) => r.status === "COMPLETED").length} completed`,
         accent: "from-[#2c8a49] to-[#5ec271]",
       },
       {
         title: "Upcoming NGO Drives",
-        value: initialOverviewStats.upcomingNgoDrives,
+        value: stats.upcomingNgoDrives,
         meta: `${
           ngoDrives.filter((drive) => new Date(drive.driveDate) >= new Date())
             .length
@@ -127,13 +164,24 @@ export default function DashboardOverview() {
       },
       {
         title: "Verification Status",
-        value: "VERIFIED",
+        value: stats.verificationStatus,
         meta: "System Admin",
         accent: "from-[#d93f42] to-[#f08a8d]",
       },
     ],
-    [requests, ngoDrives]
+    [stats, requests, ngoDrives]
   );
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#ff4d6d] mx-auto"></div>
+          <p className="mt-4 text-[#7c4a5e]">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <section className="space-y-6">
@@ -153,7 +201,7 @@ export default function DashboardOverview() {
           {quickActions.map((action) => (
             <button
               key={action.label}
-              className="flex items-center gap-2 rounded-full border border-white/80 bg-white/80 px-4 py-2 text-sm font-semibold text-[#ff4d6d] shadow-[0_10px_25px_rgba(255,77,109,0.15)]"
+              className="flex items-center gap-2 rounded-full border border-white/80 bg-white/80 px-4 py-2 text-sm font-semibold text-[#ff4d6d] shadow-[0_10px_25px_rgba(255,77,109,0.15)] hover:shadow-[0_15px_35px_rgba(255,77,109,0.25)] transition-all"
             >
               <span className="text-lg">{action.icon}</span>
               {action.label}
@@ -172,7 +220,7 @@ export default function DashboardOverview() {
               {card.title}
             </p>
             <h4
-              className={`mt-4 bg-linear-to-r ${card.accent} bg-clip-text text-4xl font-semibold text-transparent`}
+              className={`mt-4 bg-gradient-to-r ${card.accent} bg-clip-text text-4xl font-semibold text-transparent`}
             >
               {card.value}
             </h4>

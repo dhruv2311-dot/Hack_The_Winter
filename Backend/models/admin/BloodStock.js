@@ -23,18 +23,18 @@ class BloodStock {
       bloodBankId: new ObjectId(bloodBankId),
       bloodBankCode: bloodBankCode,
       bloodStock: {
-        "O+": { units: 0, lastUpdated: new Date(), updatedBy: "system" },
-        "O-": { units: 0, lastUpdated: new Date(), updatedBy: "system" },
-        "A+": { units: 0, lastUpdated: new Date(), updatedBy: "system" },
-        "A-": { units: 0, lastUpdated: new Date(), updatedBy: "system" },
-        "B+": { units: 0, lastUpdated: new Date(), updatedBy: "system" },
-        "B-": { units: 0, lastUpdated: new Date(), updatedBy: "system" },
-        "AB+": { units: 0, lastUpdated: new Date(), updatedBy: "system" },
-        "AB-": { units: 0, lastUpdated: new Date(), updatedBy: "system" }
+        "O+": { units: 8, lastUpdated: new Date(), updatedBy: "system" },
+        "O-": { units: 5, lastUpdated: new Date(), updatedBy: "system" },
+        "A+": { units: 10, lastUpdated: new Date(), updatedBy: "system" },
+        "A-": { units: 6, lastUpdated: new Date(), updatedBy: "system" },
+        "B+": { units: 9, lastUpdated: new Date(), updatedBy: "system" },
+        "B-": { units: 4, lastUpdated: new Date(), updatedBy: "system" },
+        "AB+": { units: 7, lastUpdated: new Date(), updatedBy: "system" },
+        "AB-": { units: 3, lastUpdated: new Date(), updatedBy: "system" }
       },
       lastStockUpdateAt: new Date(),
-      totalUnitsAvailable: 0,
-      criticalCount: 8, // All are critical at 0
+      totalUnitsAvailable: 52,
+      criticalCount: 1,
       createdAt: new Date(),
       updatedAt: new Date()
     };

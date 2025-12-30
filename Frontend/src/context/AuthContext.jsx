@@ -31,22 +31,14 @@ export const AuthProvider = ({ children }) => {
     setToken(authToken);
     setUser(userData);
     
-    // Store in localStorage
+    // Store in localStorage - Save complete user object
     localStorage.setItem("token", authToken);
+    localStorage.setItem("user", JSON.stringify(userData)); // ✅ Save complete user object
     localStorage.setItem("role", userData.role);
     localStorage.setItem("email", userData.email);
     localStorage.setItem("name", userData.name);
     
-    // Store organization details
-    if (userData.organizationId) {
-      localStorage.setItem("organizationId", userData.organizationId);
-    }
-    if (userData.organizationType) {
-      localStorage.setItem("organizationType", userData.organizationType);
-    }
-    if (userData.organizationCode) {
-      localStorage.setItem("organizationCode", userData.organizationCode);
-    }
+    console.log("✅ Login successful - User data saved:", userData);
   };
 
   const logout = () => {
@@ -54,13 +46,10 @@ export const AuthProvider = ({ children }) => {
     
     // Clear localStorage first
     localStorage.removeItem("token");
+    localStorage.removeItem("user"); // ✅ Remove user object
     localStorage.removeItem("role");
     localStorage.removeItem("email");
     localStorage.removeItem("name");
-    localStorage.removeItem("organizationId");
-    localStorage.removeItem("organizationType");
-    localStorage.removeItem("organizationCode");
-    localStorage.removeItem("hospitalId"); // Legacy support
     console.log("[LOGOUT] Cleared localStorage");
     
     // Update state

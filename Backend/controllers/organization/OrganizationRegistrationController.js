@@ -188,12 +188,26 @@ export const getOrganizationStatus = async (req, res) => {
       return sendError(res, "Organization not found", 404);
     }
 
+    // Return complete organization details for profile page
     const response = {
+      _id: org._id,
       organizationCode: org.organizationCode,
       registrationCode: org.registrationCode,
       name: org.name,
       type: org.type,
+      email: org.email,                    // ✅ Added
+      phone: org.phone,                    // ✅ Added
+      address: org.location || org.address, // ✅ Added (handle both field names)
+      licenseNumber: org.licenseNumber,    // ✅ Added
+      licenseIssuedDate: org.licenseIssuedDate, // ✅ Added
+      licenseExpiryDate: org.licenseExpiryDate, // ✅ Added
+      storageCapacity: org.storageCapacity, // ✅ Added
+      contactPerson: org.contactPerson,    // ✅ Added
+      certifications: org.certifications,  // ✅ Added
+      facilities: org.facilities,          // ✅ Added
+      operatingHours: org.operatingHours,  // ✅ Added
       status: org.status,
+      verificationStatus: org.verificationStatus, // ✅ Added
       statusDetails: {
         pending: org.status === "PENDING",
         approved: org.status === "APPROVED",
@@ -209,8 +223,8 @@ export const getOrganizationStatus = async (req, res) => {
       response.approvedAt = org.approvedAt;
       response.approvalRemarks = org.approvalRemarks;
       response.admin = {
-        name: org.organizationAdmin?.name,
-        email: org.organizationAdmin?.email
+        name: org.organizationAdmin?.name || org.adminName,
+        email: org.organizationAdmin?.email || org.adminEmail
       };
     }
 
@@ -218,6 +232,8 @@ export const getOrganizationStatus = async (req, res) => {
     if (org.status === "REJECTED") {
       response.rejectionReason = org.rejectionReason;
     }
+
+    console.log(`[ORG_STATUS] Returning complete details for ${organizationCode}`);
 
     sendSuccess(res, response, "Organization status retrieved");
 
