@@ -125,6 +125,15 @@ export const login = async (req, res) => {
 
     console.log(`[LOGIN_TOKEN_GENERATED] ${user.userCode}`);
 
+    // Fetch organization ObjectId from organizations collection
+    const { getDB } = await import("../../config/db.js");
+    const db = getDB();
+    const organization = await db.collection("organizations").findOne({
+      organizationCode: user.organizationCode
+    });
+
+    console.log(`[LOGIN_ORG_FETCHED] ${organization ? organization._id : 'Not found'}`);
+
     // Return user data without password
     const userData = {
       _id: user._id,
@@ -135,7 +144,8 @@ export const login = async (req, res) => {
       status: user.status,
       organizationCode: user.organizationCode,
       organizationName: user.organizationName,
-      organizationType: user.organizationType
+      organizationType: user.organizationType,
+      organizationId: organization ? organization._id.toString() : null  // ← Renamed to organizationId
     };
 
     console.log(`[LOGIN_SUCCESS] ${user.userCode}\n`);
