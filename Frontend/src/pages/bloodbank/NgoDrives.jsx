@@ -1,34 +1,11 @@
-import { useMemo, useState } from "react";
-
-const initialNgoDrives = [
-  {
-    _id: "drive001",
-    ngoName: "Red Drop Foundation",
-    driveDate: "2025-12-30",
-    location: "Ahmedabad",
-    expectedUnits: 20,
-    collectedUnits: 12,
-    status: "APPROVED",
-  },
-  {
-    _id: "drive002",
-    ngoName: "Helping Hands NGO",
-    driveDate: "2026-01-05",
-    location: "Surat",
-    expectedUnits: 15,
-    collectedUnits: 0,
-    status: "PENDING",
-  },
-  {
-    _id: "drive003",
-    ngoName: "Smile Trust",
-    driveDate: "2025-12-28",
-    location: "Vadodara",
-    expectedUnits: 25,
-    collectedUnits: 25,
-    status: "COMPLETED",
-  },
-];
+import { useMemo, useState, useEffect } from "react";
+import {
+  getAllNgoDrives,
+  getDrivesByBloodBank,
+  updateDriveStatus,
+  updateNgoDrive,
+} from "../../services/bloodBankApi";
+import toast from "react-hot-toast";
 
 const statusBadgeStyles = {
   VERIFIED:
@@ -45,47 +22,142 @@ const formatShortDate = (iso) =>
     dateStyle: "medium",
   }).format(new Date(iso));
 
+const normalizeDrives = (payload) => {
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.drives)) return payload.drives;
+  if (Array.isArray(payload?.data)) return payload.data;
+  return [];
+};
+
 export default function NgoDrives() {
-  const [ngoDrives, setNgoDrives] = useState(initialNgoDrives);
+  const [loading, setLoading] = useState(true);
+  const [ngoDrives, setNgoDrives] = useState([]);
   const [driveStatusFilter, setDriveStatusFilter] = useState("ALL");
 
   const verificationStatus = "VERIFIED"; // This would come from context/state in real app
   const actionsLocked = verificationStatus !== "VERIFIED";
 
+  useEffect(() => {
+    fetchDrives();
+  }, []);
+
+  const fetchDrives = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("token");
+      const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+      const bloodBankId =
+        storedUser.organizationId ||
+        storedUser.bloodBankId ||
+        storedUser._id ||
+        storedUser.organization?._id;
+
+      if (!bloodBankId) {
+        toast.error("Blood bank ID not found. Please login again.");
+        setNgoDrives([]);
+        return;
+      }
+
+      const response = await getDrivesByBloodBank(bloodBankId);
+      let normalized = normalizeDrives(response.data?.data);
+
+      // Fallback: if no drives assigned yet, show all drives so UI isn't empty
+      if ((!normalized || !normalized.length) && response.data?.success) {
+        const allRes = await getAllNgoDrives();
+        normalized = normalizeDrives(allRes.data?.data);
+      }
+
+      if (response.data?.success || normalized.length) {
+        setNgoDrives(normalized);
+      } else {
+        setNgoDrives([]);
+      }
+    } catch (error) {
+      console.error("Error fetching NGO drives:", error);
+      toast.error("Failed to load NGO drives");
+      setNgoDrives([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const filteredDrives = useMemo(
     () =>
-      ngoDrives.filter(
+      (ngoDrives || []).filter(
         (drive) =>
           driveStatusFilter === "ALL" || drive.status === driveStatusFilter
       ),
     [ngoDrives, driveStatusFilter]
   );
 
-  const handleDriveStatus = (id, nextStatus) => {
-    setNgoDrives((prev) =>
-      prev.map((drive) =>
-        drive._id === id
-          ? {
-              ...drive,
-              status: nextStatus,
-            }
-          : drive
-      )
-    );
+  const handleDriveStatus = async (id, nextStatus) => {
+    try {
+      const response = await updateDriveStatus(id, nextStatus);
+      
+      if (response.data?.success) {
+        setNgoDrives((prev) =>
+          prev.map((drive) =>
+            drive._id === id
+              ? {
+                  ...drive,
+                  status: nextStatus,
+                }
+              : drive
+          )
+        );
+        toast.success(`Drive ${nextStatus.toLowerCase()} successfully`);
+      } else {
+        toast.error("Failed to update drive status");
+      }
+    } catch (error) {
+      console.error("Error updating drive status:", error);
+      toast.error("Failed to update drive status");
+    }
   };
 
-  const handleDriveCollection = (id, delta) => {
-    setNgoDrives((prev) =>
-      prev.map((drive) =>
-        drive._id === id
-          ? {
-              ...drive,
-              collectedUnits: Math.max(0, drive.collectedUnits + delta),
-            }
-          : drive
-      )
-    );
+  const handleDriveCollection = async (id, delta) => {
+    try {
+      const drive = ngoDrives.find(d => d._id === id);
+      if (!drive) return;
+
+      const newCollectedUnits = Math.max(0, (drive.collectedUnits || 0) + delta);
+      
+      const response = await updateNgoDrive(id, {
+        collectedUnits: newCollectedUnits
+      });
+      
+      if (response.data?.success) {
+        setNgoDrives((prev) =>
+          prev.map((drive) =>
+            drive._id === id
+              ? {
+                  ...drive,
+                  collectedUnits: newCollectedUnits,
+                }
+              : drive
+          )
+        );
+        toast.success("Collection updated successfully");
+      } else {
+        toast.error("Failed to update collection");
+      }
+    } catch (error) {
+      console.error("Error updating drive collection:", error);
+      toast.error("Failed to update collection");
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#ff4d6d] mx-auto"></div>
+          <p className="mt-4 text-[#7c4a5e]">Loading NGO drives...</p>
+        </div>
+      </div>
+    );
+  }
+
 
   return (
     <section className="space-y-6 rounded-3xl border border-white/60 bg-white/90 p-6 shadow-[0_25px_60px_rgba(255,118,158,0.12)]">
