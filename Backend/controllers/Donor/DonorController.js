@@ -1,7 +1,143 @@
 import { ObjectId } from "mongodb";
 import { DonorCollection } from "../../models/donor/Donor.js";
 import { DonationCollection } from "../../models/donor/Donation.js";
+import { getDB } from "../../config/db.js";
 
+/**
+ * Get CampRegistrations collection
+ */
+const CampRegistrationCollection = () => {
+  return getDB().collection("campRegistrations");
+};
+
+/**
+ * Register a new donor directly (without camp)
+ * Used for general blood donor registration via landing page
+ * Stores data in campRegistrations collection
+ */
+export const registerDonor = async (req, res) => {
+  try {
+    const {
+      name,
+      age,
+      gender,
+      bloodGroup,
+      mobileNumber,
+      city,
+      address,
+      email,
+      donationDate,
+      donationTime,
+      nextDonationDate,
+      campId,
+      slotId,
+      campName,
+      campLocation,
+      slotTime,
+    } = req.body;
+
+    // 0️⃣ Validate required fields
+    if (!name || !age || !gender || !bloodGroup || !mobileNumber || !city || !donationDate || !donationTime) {
+      return res.status(400).json({
+        message: "Missing required fields: name, age, gender, bloodGroup, mobileNumber, city, donationDate, donationTime"
+      });
+    }
+
+    // Validate age
+    if (age < 18 || age > 65) {
+      return res.status(400).json({
+        message: "Age must be between 18 and 65 years"
+      });
+    }
+
+    // Validate mobile number
+    if (!/^\d{10}$/.test(mobileNumber)) {
+      return res.status(400).json({
+        message: "Mobile number must be 10 digits"
+      });
+    }
+
+    // 1️⃣ Check if donor already exists by mobile number in donors collection
+    let donor = await DonorCollection().findOne({ mobileNumber });
+
+    if (donor) {
+      return res.status(400).json({
+        message: "Donor already registered with this mobile number"
+      });
+    }
+
+    // 2️⃣ Check if registration already exists for this mobile number on this date
+    const existingRegistration = await CampRegistrationCollection().findOne({
+      mobileNumber,
+      donationDate: new Date(donationDate)
+    });
+
+    if (existingRegistration) {
+      return res.status(400).json({
+        message: "You already have a registration for this date"
+      });
+    }
+
+    // 3️⃣ Create new donor in donors collection
+    const donorInsert = await DonorCollection().insertOne({
+      name,
+      age,
+      gender,
+      bloodGroup,
+      mobileNumber,
+      city,
+      address: address || "",
+      email: email || "",
+      lastDonationDate: null,
+      totalDonations: 0,
+      registrationType: "direct",
+      createdAt: new Date()
+    });
+
+    // 4️⃣ Create camp registration entry in campRegistrations collection
+    const campRegistrationInsert = await CampRegistrationCollection().insertOne({
+      donorId: donorInsert.insertedId,
+      name,
+      age,
+      gender,
+      bloodGroup,
+      mobileNumber,
+      city,
+      address: address || "",
+      email: email || "",
+      donationDate: new Date(donationDate),
+      donationTime,
+      nextDonationDate: new Date(nextDonationDate),
+      campId: campId ? new ObjectId(campId) : null,
+      slotId: slotId ? new ObjectId(slotId) : null,
+      campName: campName || "",
+      campLocation: campLocation || "",
+      slotTime: slotTime || "",
+      status: "registered", // registered, completed, cancelled
+      registrationType: "direct",
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "✅ Donor registered successfully! Thank you for being a blood donor.",
+      donorId: donorInsert.insertedId,
+      registrationId: campRegistrationInsert.insertedId,
+      nextDonationDate: nextDonationDate
+    });
+  } catch (error) {
+    console.error("Register donor error:", error);
+    res.status(500).json({
+      message: "Server error",
+      ...(process.env.NODE_ENV === "development" && { error: error.message })
+    });
+  }
+};
+
+/**
+ * Register a donor for a specific camp
+ */
 export const registerDonorForCamp = async (req, res) => {
   try {
     const {

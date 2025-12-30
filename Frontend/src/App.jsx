@@ -1,7 +1,9 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
+import LandingPage from "./pages/LandingPage";
 import OrganizationPage from "./pages/OrganizationPage";
 import Login from "./pages/Login";
+import DonorRegistration from "./pages/DonorRegistration";
 import SuperAdminLogin from "./pages/SuperAdminLogin";
 import Register from "./pages/Register";
 import OrganizationRegistration from "./pages/OrganizationRegistration";
@@ -55,9 +57,10 @@ export default function App() {
         }}
       />
       <Routes>
-        <Route path="/" element={<Navigate to="/organization" />} />
+        <Route path="/" element={<LandingPage />} />
         <Route path="/organization" element={<OrganizationPage />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/donor-registration" element={<DonorRegistration />} />
         <Route path="/superadmin-login" element={<SuperAdminLogin />} />
         <Route path="/register" element={<Register />} />
         <Route path="/organization-registration" element={<OrganizationRegistration />} />

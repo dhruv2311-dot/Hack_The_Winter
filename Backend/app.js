@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import { getDB } from "./config/db.js";
 
 // Import routes
 import authRoutes from "./routes/auth/AuthRoutes.js";
@@ -69,6 +70,213 @@ app.get("/health", (req, res) => {
 // Root route
 app.get("/", (req, res) => {
   res.json({ message: "SEBN Backend Running 🚀" });
+});
+
+// ============= PUBLIC CAMPS & SLOTS ENDPOINTS =============
+
+// Public camps endpoint (for donor registration)
+app.get("/api/public/camps", async (req, res) => {
+  try {
+    const db = getDB();
+    const camps = await db
+      .collection("ngoCamps")
+      .find({ isActive: true })
+      .toArray();
+    
+    console.log("Fetched camps:", camps.length);
+    
+    res.json({
+      success: true,
+      message: `Found ${camps.length} camps`,
+      camps: camps.map((camp) => ({
+        _id: camp._id,
+        campName: camp.campName || camp.name,
+        location: camp.location,
+        city: camp.city,
+        startDate: camp.startDate,
+        endDate: camp.endDate,
+      })),
+    });
+  } catch (error) {
+    console.error("Error fetching camps:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch camps",
+    });
+  }
+});
+
+// Public slots endpoint (for donor registration - get slots by camp)
+app.get("/api/public/camps/:campId/slots", async (req, res) => {
+  try {
+    const db = getDB();
+    const { campId } = req.params;
+    const { ObjectId } = await import("mongodb");
+    
+    const slots = await db
+      .collection("campSlots")
+      .find({ campId: new ObjectId(campId) })
+      .sort({ createdAt: 1 })
+      .toArray();
+    
+    console.log(`Fetched slots for camp ${campId}:`, slots.length);
+    
+    res.json({
+      success: true,
+      message: `Found ${slots.length} slots`,
+      slots: slots.map((slot) => ({
+        _id: slot._id,
+        slotTime: slot.slotTime,
+        maxDonors: slot.maxDonors,
+        bookedCount: slot.bookedCount || 0,
+        availableSpots: (slot.maxDonors || 0) - (slot.bookedCount || 0),
+      })),
+    });
+  } catch (error) {
+    console.error("Error fetching slots:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch slots",
+    });
+  }
+});
+
+// Test endpoint - Create sample camps for testing
+app.post("/api/test/create-sample-camps", async (req, res) => {
+  try {
+    const db = getDB();
+    const sampleCamps = [
+      {
+        campName: "Red Cross Blood Camp - Delhi",
+        location: "Central Hospital, New Delhi",
+        city: "New Delhi",
+        state: "Delhi",
+        pincode: "110001",
+        description: "Monthly blood donation camp",
+        contactPersonName: "Dr. Sharma",
+        contactMobile: "9876543210",
+        totalSlots: 5,
+        expectedDonors: 100,
+        status: "active",
+        isActive: true,
+        startDate: new Date(),
+        endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        campName: "NGO Blood Drive - Mumbai",
+        location: "Community Center, Mumbai",
+        city: "Mumbai",
+        state: "Maharashtra",
+        pincode: "400001",
+        description: "Weekly donation camp",
+        contactPersonName: "Mr. Patel",
+        contactMobile: "8765432109",
+        totalSlots: 3,
+        expectedDonors: 80,
+        status: "active",
+        isActive: true,
+        startDate: new Date(),
+        endDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        campName: "Blood Bank Camp - Bangalore",
+        location: "City Hospital, Bangalore",
+        city: "Bangalore",
+        state: "Karnataka",
+        pincode: "560001",
+        description: "Fortnightly blood donation",
+        contactPersonName: "Dr. Desai",
+        contactMobile: "7654321098",
+        totalSlots: 4,
+        expectedDonors: 120,
+        status: "active",
+        isActive: true,
+        startDate: new Date(),
+        endDate: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000),
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+    ];
+
+    const result = await db.collection("ngoCamps").insertMany(sampleCamps);
+    res.json({
+      success: true,
+      message: `Created ${result.insertedIds.length} sample camps`,
+      insertedIds: result.insertedIds
+    });
+  } catch (error) {
+    console.error("Error creating sample camps:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to create sample camps",
+      error: error.message
+    });
+  }
+});
+
+// Test endpoint - Create sample slots for test camps
+app.post("/api/test/create-sample-slots", async (req, res) => {
+  try {
+    const db = getDB();
+    const { ObjectId } = await import("mongodb");
+    
+    // Get all camps
+    const camps = await db.collection("ngoCamps").find({}).toArray();
+    
+    if (camps.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "No camps found. Please create camps first using /api/test/create-sample-camps"
+      });
+    }
+
+    const timeSlots = [
+      "06:00 AM - 08:00 AM",
+      "08:00 AM - 10:00 AM",
+      "10:00 AM - 12:00 PM",
+      "12:00 PM - 02:00 PM",
+      "02:00 PM - 04:00 PM",
+      "04:00 PM - 06:00 PM",
+      "06:00 PM - 08:00 PM"
+    ];
+
+    const sampleSlots = [];
+
+    // Create slots for each camp
+    camps.forEach(camp => {
+      timeSlots.forEach(time => {
+        sampleSlots.push({
+          campId: camp._id,
+          slotTime: time,
+          maxDonors: 10,
+          bookedCount: 0,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        });
+      });
+    });
+
+    const result = await db.collection("campSlots").insertMany(sampleSlots);
+    
+    res.json({
+      success: true,
+      message: `Created ${sampleSlots.length} sample time slots for ${camps.length} camps`,
+      slotsCreated: result.insertedIds.length,
+      campCount: camps.length,
+      slotsPerCamp: timeSlots.length
+    });
+  } catch (error) {
+    console.error("Error creating sample slots:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to create sample slots",
+      error: error.message
+    });
+  }
 });
 
 // API routes
