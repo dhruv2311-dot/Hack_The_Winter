@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { hospitalService } from '../../services/adminService';
 import { Eye, Check, X, Edit2, Trash2, ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function HospitalManagement() {
+  const navigate = useNavigate();
   const [hospitals, setHospitals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedHospital, setSelectedHospital] = useState(null);
@@ -14,7 +16,7 @@ export default function HospitalManagement() {
     status: '',
     city: '',
     page: 1,
-    limit: 100, // Increased to get more hospitals for search
+    limit: 10,
   });
   const [pagination, setPagination] = useState({});
 
@@ -31,7 +33,9 @@ export default function HospitalManagement() {
     searchTimeoutRef.current = setTimeout(() => {
       // Reset to page 1 on new search
       if (searchTerm.trim()) {
-        setFilters(prev => ({ ...prev, page: 1 }));
+        setFilters(prev => ({ ...prev, page: 1, limit: 100 })); // Get more results for search
+      } else {
+        setFilters(prev => ({ ...prev, page: 1, limit: 10 })); // Reset to normal pagination
       }
     }, 300);
 
@@ -100,18 +104,7 @@ export default function HospitalManagement() {
   };
 
   const viewDetails = async (hospitalId) => {
-    try {
-      const response = await hospitalService.getHospitalById(hospitalId);
-      const hospital = response.data.data;
-      // Add isActive property based on status
-      setSelectedHospital({
-        ...hospital,
-        isActive: isHospitalActive(hospital.status)
-      });
-      setDetailsOpen(true);
-    } catch (error) {
-      toast.error('Failed to fetch hospital details');
-    }
+    navigate(`/superadmin/hospital/${hospitalId}`);
   };
 
   const getStatusBadge = (status) => {

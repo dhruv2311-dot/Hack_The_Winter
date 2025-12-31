@@ -31,6 +31,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import SuperAdminLayout from "./layouts/SuperAdminLayout";
 import SuperAdminDashboard from "./pages/superadmin/Dashboard";
 import HospitalManagement from "./pages/superadmin/HospitalManagement";
+import HospitalDetails from "./pages/superadmin/HospitalDetails";
 import NGOManagement from "./pages/superadmin/NGOManagement";
 import BloodBankManagement from "./pages/superadmin/BloodBankManagement";
 import BloodStockManagement from "./pages/superadmin/BloodStockManagement";
@@ -138,6 +139,7 @@ export default function App() {
           <Route index element={<Navigate to="/superadmin/dashboard" replace />} />
           <Route path="dashboard" element={<SuperAdminDashboard />} />
           <Route path="hospitals" element={<HospitalManagement />} />
+          <Route path="hospital/:id" element={<HospitalDetails />} />
           <Route path="ngos" element={<NGOManagement />} />
           <Route path="blood-banks" element={<BloodBankManagement />} />
           <Route path="blood-stock" element={<BloodStockManagement />} />

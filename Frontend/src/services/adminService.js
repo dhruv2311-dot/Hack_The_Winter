@@ -41,7 +41,26 @@ export const hospitalService = {
   
   activateHospital: (id) => adminAPI.post(`/admin/hospitals/${id}/activate`),
   
-  deactivateHospital: (id) => adminAPI.post(`/admin/hospitals/${id}/deactivate`),
+  deactivateHospital: (id) => adminAPI.post(`/admin/hospitals/${id}/suspend`, { reason: 'Deactivated by admin' }),
+  
+  approveHospital: (id) => {
+    // Get hospital details first to get organizationCode
+    return adminAPI.get(`/admin/hospitals/id/${id}`).then(res => {
+      const organizationCode = res.data.data.organizationCode;
+      return adminAPI.post(`/admin/approvals/approve`, { organizationCode });
+    });
+  },
+  
+  rejectHospital: (id) => {
+    // Get hospital details first to get organizationCode
+    return adminAPI.get(`/admin/hospitals/id/${id}`).then(res => {
+      const organizationCode = res.data.data.organizationCode;
+      return adminAPI.post(`/admin/approvals/reject`, { 
+        organizationCode,
+        rejectionReason: 'Rejected by admin'
+      });
+    });
+  },
   
   updateHospital: (id, data) => adminAPI.put(`/admin/hospitals/${id}`, data),
 };
