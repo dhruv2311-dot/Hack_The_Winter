@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react';
 import { bloodStockService } from '../../services/adminService';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { AlertCircle, TrendingUp, TrendingDown, Eye, X } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { AlertCircle, Eye, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const BLOOD_GROUPS = ['O+', 'O-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-'];
-const COLORS = ['#ef4444', '#f97316', '#eab308', '#84cc16', '#22c55e', '#10b981', '#14b8a6', '#06b6d4'];
 
 export default function BloodStockManagement() {
   const [summary, setSummary] = useState(null);
@@ -73,19 +72,36 @@ export default function BloodStockManagement() {
 
   // Prepare data for charts
   const getChartData = () => {
-    if (!summary || !summary.byBloodGroup) return [];
+    if (!summary || !summary.bloodGroupBreakdown) return [];
     return BLOOD_GROUPS.map((group) => ({
       bloodGroup: group,
-      units: summary.byBloodGroup[group] || 0,
+      units: summary.bloodGroupBreakdown[group] || 0,
     }));
   };
 
+  const getMostAvailable = () => {
+    if (!summary || !summary.bloodGroupBreakdown) return 'N/A';
+    const bloodGroups = Object.entries(summary.bloodGroupBreakdown);
+    if (bloodGroups.length === 0) return 'N/A';
+    const [group] = bloodGroups.reduce((prev, current) =>
+      prev[1] > current[1] ? prev : current
+    );
+    return group;
+  };
+
+  const getLowStockCount = () => {
+    if (!summary || !summary.bloodGroupBreakdown) return 0;
+    return Object.values(summary.bloodGroupBreakdown).filter(units => units < 50).length;
+  };
+
   const getLowStockData = () => {
-    if (!summary || !summary.byBloodGroup) return [];
-    return BLOOD_GROUPS.filter((group) => (summary.byBloodGroup[group] || 0) < 50).map((group) => ({
-      name: group,
-      units: summary.byBloodGroup[group] || 0,
-    }));
+    if (!summary || !summary.bloodGroupBreakdown) return [];
+    return Object.entries(summary.bloodGroupBreakdown)
+      .filter(([_, units]) => units < 50)
+      .map(([name, units]) => ({
+        name,
+        units,
+      }));
   };
 
   const getStockStatus = (units) => {
@@ -136,31 +152,31 @@ export default function BloodStockManagement() {
 
           <div className="bg-white rounded-lg shadow-md p-6 border-t-4 border-green-600">
             <p className="text-gray-600 text-sm font-semibold mb-2">Most Available</p>
-            <p className="text-3xl font-bold text-gray-900">{summary.mostAvailable || 'N/A'}</p>
+            <p className="text-3xl font-bold text-gray-900">{getMostAvailable()}</p>
             <p className="text-xs text-gray-500 mt-2">Blood group</p>
           </div>
 
           <div className="bg-white rounded-lg shadow-md p-6 border-t-4 border-orange-600">
             <p className="text-gray-600 text-sm font-semibold mb-2">Low Stock Items</p>
-            <p className="text-3xl font-bold text-gray-900">{summary.lowStockCount || 0}</p>
+            <p className="text-3xl font-bold text-gray-900">{getLowStockCount()}</p>
             <p className="text-xs text-gray-500 mt-2">Below 50 units</p>
           </div>
 
           <div className="bg-white rounded-lg shadow-md p-6 border-t-4 border-purple-600">
             <p className="text-gray-600 text-sm font-semibold mb-2">Blood Banks</p>
-            <p className="text-3xl font-bold text-gray-900">{summary.bankCount || 0}</p>
+            <p className="text-3xl font-bold text-gray-900">{summary.bloodBankCount || 0}</p>
             <p className="text-xs text-gray-500 mt-2">Active blood banks</p>
           </div>
         </div>
       )}
 
       {/* Alert for Low Stock */}
-      {summary && summary.lowStockCount > 0 && (
+      {getLowStockCount() > 0 && (
         <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-8 flex gap-4">
           <AlertCircle className="text-orange-600 flex-shrink-0 mt-0.5" />
           <div>
             <p className="text-sm font-semibold text-orange-900">
-              {summary.lowStockCount} blood groups are running low
+              {getLowStockCount()} blood groups are running low
             </p>
             <p className="text-sm text-orange-700 mt-1">
               Please coordinate with blood banks to replenish critical blood types
@@ -170,7 +186,7 @@ export default function BloodStockManagement() {
       )}
 
       {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+      <div className="grid grid-cols-1 mb-8">
         {/* Blood Stock by Type - Bar Chart */}
         <div className="bg-white rounded-lg shadow-md p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Stock by Blood Type</h2>
@@ -184,30 +200,6 @@ export default function BloodStockManagement() {
             </BarChart>
           </ResponsiveContainer>
         </div>
-
-        {/* Distribution Pie Chart */}
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Distribution</h2>
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={getChartData()}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                label={({ bloodGroup, units }) => `${bloodGroup}: ${units}`}
-                outerRadius={100}
-                fill="#8884d8"
-                dataKey="units"
-              >
-                {BLOOD_GROUPS.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
       </div>
 
       {/* Blood Group Status Table */}
@@ -215,7 +207,7 @@ export default function BloodStockManagement() {
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Blood Group Status</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {BLOOD_GROUPS.map((group) => {
-            const units = summary?.byBloodGroup?.[group] || 0;
+            const units = summary?.bloodGroupBreakdown?.[group] || 0;
             const status = getStockStatus(units);
             return (
               <div key={group} className="border border-gray-200 rounded-lg p-4">
@@ -426,12 +418,9 @@ export default function BloodStockManagement() {
               <div className="flex gap-3">
                 <button
                   onClick={() => setBankDetailModal(false)}
-                  className="flex-1 bg-gray-200 text-gray-900 px-4 py-2 rounded-lg hover:bg-gray-300 transition font-medium"
+                  className="w-full bg-gray-200 text-gray-900 px-4 py-2 rounded-lg hover:bg-gray-300 transition font-medium"
                 >
                   Close
-                </button>
-                <button className="flex-1 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition font-medium">
-                  Update Stock
                 </button>
               </div>
             </div>
