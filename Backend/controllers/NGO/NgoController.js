@@ -90,9 +90,9 @@ const sendValidationError = (res, errors = []) => {
  */
 export const createCamp = async (req, res) => {
   try {
-    // Check if user is ADMIN
-    if (req.user.role !== "ADMIN") {
-      return sendError(res, "Only ADMIN can create camps", 403);
+    // Check if user is ADMIN or NGO
+    if (req.user.role !== "ADMIN" && req.user.role !== "ngo") {
+      return sendError(res, "Only ADMIN or NGO can create camps", 403);
     }
 
     // Validate input

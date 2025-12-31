@@ -27,6 +27,7 @@ import publicBloodBankRoutes from "./routes/BloodBankRoutes.js";  // ← Public 
 import publicNgoRoutes from "./routes/NgoPublicRoutes.js";  // ← Public NGOs
 import debugRoutes from "./routes/DebugRoutes.js";  // ← Debug routes
 import syncRoutes from "./routes/SyncRoutes.js";  // ← Sync routes
+import resourceRequestRoutes from "./routes/ngo/CampResourceRequestRoutes.js"; // ← Resource Request Routes
 
 
 // Import middleware
@@ -82,9 +83,9 @@ app.get("/api/public/camps", async (req, res) => {
       .collection("ngoCamps")
       .find({ isActive: true })
       .toArray();
-    
+
     console.log("Fetched camps:", camps.length);
-    
+
     res.json({
       success: true,
       message: `Found ${camps.length} camps`,
@@ -112,15 +113,15 @@ app.get("/api/public/camps/:campId/slots", async (req, res) => {
     const db = getDB();
     const { campId } = req.params;
     const { ObjectId } = await import("mongodb");
-    
+
     const slots = await db
       .collection("campSlots")
       .find({ campId: new ObjectId(campId) })
       .sort({ createdAt: 1 })
       .toArray();
-    
+
     console.log(`Fetched slots for camp ${campId}:`, slots.length);
-    
+
     res.json({
       success: true,
       message: `Found ${slots.length} slots`,
@@ -223,10 +224,10 @@ app.post("/api/test/create-sample-slots", async (req, res) => {
   try {
     const db = getDB();
     const { ObjectId } = await import("mongodb");
-    
+
     // Get all camps
     const camps = await db.collection("ngoCamps").find({}).toArray();
-    
+
     if (camps.length === 0) {
       return res.status(400).json({
         success: false,
@@ -261,7 +262,7 @@ app.post("/api/test/create-sample-slots", async (req, res) => {
     });
 
     const result = await db.collection("campSlots").insertMany(sampleSlots);
-    
+
     res.json({
       success: true,
       message: `Created ${sampleSlots.length} sample time slots for ${camps.length} camps`,
@@ -303,6 +304,7 @@ app.use("/api/ngo", authMiddleware, ngoRoutes);
 app.use("/api/donor", donorRoutes);
 app.use("/api/debug", debugRoutes);  // ← Debug routes (development only)
 app.use("/api/sync", syncRoutes);  // ← Sync routes (development only)
+app.use("/api/resource-requests", resourceRequestRoutes);
 
 // ============= ERROR HANDLING =============
 

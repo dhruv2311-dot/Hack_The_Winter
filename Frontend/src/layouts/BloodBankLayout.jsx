@@ -1,4 +1,4 @@
- import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
@@ -6,6 +6,7 @@ const navItems = [
   { label: "Dashboard Overview", path: "/bloodbank/overview" },
   { label: "Hospital Requests", path: "/bloodbank/hospital-requests" },
   { label: "NGO Drives", path: "/bloodbank/ngo-drives" },
+  { label: "Resource Requests", path: "/bloodbank/resource-requests" }, // New Item
   { label: "Blood Stock", path: "/bloodbank/blood-stock" },
   { label: "Admin Messages", path: "/bloodbank/admin-messages" },
   { label: "Profile & Settings", path: "/bloodbank/profile-settings" },
@@ -48,11 +49,10 @@ export default function BloodBankLayout() {
           <Link
             key={item.path}
             to={item.path}
-            className={`flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-semibold transition ${
-              location.pathname === item.path
-                ? "bg-white/25 text-white"
-                : "text-white/90 hover:bg-white/15"
-            }`}
+            className={`flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-semibold transition ${location.pathname === item.path
+              ? "bg-white/25 text-white"
+              : "text-white/90 hover:bg-white/15"
+              }`}
           >
             {item.label}
             <span>↗</span>
@@ -104,9 +104,8 @@ export default function BloodBankLayout() {
                       {organizationName}
                     </h2>
                     <span
-                      className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                        statusBadgeStyles[verificationStatus]
-                      }`}
+                      className={`rounded-full px-3 py-1 text-xs font-semibold ${statusBadgeStyles[verificationStatus]
+                        }`}
                     >
                       {verificationStatus}
                     </span>
@@ -138,11 +137,10 @@ export default function BloodBankLayout() {
           <main className="flex-1 px-4 py-8 md:px-10">
             {verificationStatus !== "VERIFIED" && (
               <div
-                className={`mb-6 rounded-3xl border px-6 py-4 text-sm font-semibold ${
-                  verificationStatus === "SUSPENDED"
-                    ? "border-[#ff4d6d]/40 bg-[#ffe2eb]"
-                    : "border-[#f8c37b]/60 bg-[#fff5e7]"
-                }`}
+                className={`mb-6 rounded-3xl border px-6 py-4 text-sm font-semibold ${verificationStatus === "SUSPENDED"
+                  ? "border-[#ff4d6d]/40 bg-[#ffe2eb]"
+                  : "border-[#f8c37b]/60 bg-[#fff5e7]"
+                  }`}
               >
                 {verificationStatus === "SUSPENDED"
                   ? "Account suspended — operations locked until HQ reinstates the profile."
@@ -156,20 +154,17 @@ export default function BloodBankLayout() {
       </div>
 
       <div
-        className={`fixed inset-0 z-40 lg:hidden transition ${
-          drawerOpen ? "pointer-events-auto" : "pointer-events-none"
-        }`}
+        className={`fixed inset-0 z-40 lg:hidden transition ${drawerOpen ? "pointer-events-auto" : "pointer-events-none"
+          }`}
       >
         <div
-          className={`absolute inset-0 bg-black/40 transition-opacity ${
-            drawerOpen ? "opacity-100" : "opacity-0"
-          }`}
+          className={`absolute inset-0 bg-black/40 transition-opacity ${drawerOpen ? "opacity-100" : "opacity-0"
+            }`}
           onClick={() => setDrawerOpen(false)}
         />
         <div
-          className={`absolute right-0 h-full w-80 max-w-[80%] bg-gradient-to-b from-[#5c0f14] via-[#75161d] to-[#9b1e27] px-7 py-8 text-white shadow-2xl transition-transform duration-300 ${
-            drawerOpen ? "translate-x-0" : "translate-x-full"
-          }`}
+          className={`absolute right-0 h-full w-80 max-w-[80%] bg-gradient-to-b from-[#5c0f14] via-[#75161d] to-[#9b1e27] px-7 py-8 text-white shadow-2xl transition-transform duration-300 ${drawerOpen ? "translate-x-0" : "translate-x-full"
+            }`}
         >
           <div className="mb-6 flex items-center justify-between">
             <p className="text-sm font-semibold tracking-wider text-white/70">

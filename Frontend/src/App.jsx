@@ -14,6 +14,7 @@ import HospitalRequests from "./pages/bloodbank/HospitalRequests";
 import NgoDrives from "./pages/bloodbank/NgoDrives";
 import BloodStock from "./pages/bloodbank/BloodStock";
 import AdminMessages from "./pages/bloodbank/AdminMessages";
+import ResourceRequests from "./pages/bloodbank/ResourceRequests"; // New Page
 import ProfileSettings from "./pages/bloodbank/ProfileSettings";
 import HospitalLayout from "./layouts/HospitalLayout";
 import HospitalOverview from "./pages/hospital/Overview";
@@ -28,17 +29,6 @@ import NgoSlots from "./pages/ngo/SlotManagement";
 import NgoDonors from "./pages/ngo/DonorRegistry";
 import NgoConnectivity from "./pages/ngo/ConnectivityGrid";
 import ProtectedRoute from "./components/ProtectedRoute";
-import SuperAdminLayout from "./layouts/SuperAdminLayout";
-import SuperAdminDashboard from "./pages/superadmin/Dashboard";
-import HospitalManagement from "./pages/superadmin/HospitalManagement";
-import HospitalDetails from "./pages/superadmin/HospitalDetails";
-import NGOManagement from "./pages/superadmin/NGOManagement";
-import NGODetails from "./pages/superadmin/NGODetails";
-import BloodBankManagement from "./pages/superadmin/BloodBankManagement";
-import BloodBankDetails from "./pages/superadmin/BloodBankDetails";
-import BloodStockManagement from "./pages/superadmin/BloodStockManagement";
-import ApprovalsManagement from "./pages/superadmin/ApprovalsManagement";
-import AdminSettings from "./pages/superadmin/Settings";
 
 export default function App() {
   return (
@@ -81,7 +71,7 @@ export default function App() {
         <Route
           path="/bloodbank"
           element={
-            <ProtectedRoute allowedRoles={["bloodbank", "BLOODBANK","ADMIN"]}>
+            <ProtectedRoute allowedRoles={["bloodbank", "BLOODBANK", "ADMIN"]}>
               <BloodBankLayout />
             </ProtectedRoute>
           }
@@ -92,6 +82,7 @@ export default function App() {
           <Route path="ngo-drives" element={<NgoDrives />} />
           <Route path="blood-stock" element={<BloodStock />} />
           <Route path="admin-messages" element={<AdminMessages />} />
+          <Route path="resource-requests" element={<ResourceRequests />} />
           <Route path="profile-settings" element={<ProfileSettings />} />
         </Route>
 
@@ -99,7 +90,7 @@ export default function App() {
         <Route
           path="/hospital"
           element={
-            <ProtectedRoute allowedRoles={["hospital", "HOSPITAL","ADMIN","Doctor"]}>
+            <ProtectedRoute allowedRoles={["hospital", "HOSPITAL", "ADMIN", "Doctor"]}>
               <HospitalLayout />
             </ProtectedRoute>
           }
@@ -116,7 +107,7 @@ export default function App() {
         <Route
           path="/ngo/dashboard"
           element={
-            <ProtectedRoute allowedRoles={["ngo", "NGO","ADMIN"]}>
+            <ProtectedRoute allowedRoles={["ngo", "NGO", "ADMIN"]}>
               <NgoLayout />
             </ProtectedRoute>
           }
@@ -129,36 +120,17 @@ export default function App() {
           <Route path="connectivity" element={<NgoConnectivity />} />
         </Route>
 
-        {/* Superadmin Dashboard - Protected Routes */}
-        <Route
-          path="/superadmin"
-          element={
-            <ProtectedRoute allowedRoles={["SUPERADMIN", "ADMIN", "superadmin", "admin"]}>
-              <SuperAdminLayout />
-            </ProtectedRoute>
-          }
-        >
-          <Route index element={<Navigate to="/superadmin/dashboard" replace />} />
-          <Route path="dashboard" element={<SuperAdminDashboard />} />
-          <Route path="hospitals" element={<HospitalManagement />} />
-          <Route path="hospital/:id" element={<HospitalDetails />} />
-          <Route path="ngos" element={<NGOManagement />} />
-          <Route path="ngo/:id" element={<NGODetails />} />
-          <Route path="blood-banks" element={<BloodBankManagement />} />
-          <Route path="blood-bank/:id" element={<BloodBankDetails />} />
-          <Route path="blood-stock" element={<BloodStockManagement />} />
-          <Route path="approvals" element={<ApprovalsManagement />} />
-          <Route path="settings" element={<AdminSettings />} />
-        </Route>
-
-        {/* Fallback for superadmin login redirect */}
+        {/* Superadmin Dashboard - Placeholder */}
         <Route
           path="/superadmin/dashboard"
           element={
-            <ProtectedRoute allowedRoles={["SUPERADMIN", "ADMIN", "superadmin", "admin"]}>
-              <SuperAdminLayout>
-                <SuperAdminDashboard />
-              </SuperAdminLayout>
+            <ProtectedRoute allowedRoles={["SUPERADMIN"]}>
+              <div className="min-h-screen flex items-center justify-center bg-gray-100">
+                <div className="text-center">
+                  <h1 className="text-3xl font-bold text-gray-800 mb-4">Superadmin Dashboard</h1>
+                  <p className="text-gray-600">Coming soon...</p>
+                </div>
+              </div>
             </ProtectedRoute>
           }
         />
