@@ -49,11 +49,12 @@ export default function Dashboard() {
       setLoading(true);
       
       // Fetch all dashboard data in parallel
-      const [overviewRes, growthRes, bloodTypesRes, usersRes] = await Promise.all([
+      const [overviewRes, growthRes, bloodTypesRes, usersRes, activityRes] = await Promise.all([
         adminService.getDashboardOverview(),
         adminService.getGrowthTrends(),
         adminService.getBloodTypeBreakdown(),
-        adminService.getActiveUsersTrend()
+        adminService.getActiveUsersTrend(),
+        adminService.getRecentActivity(5)
       ]);
 
       console.log('Dashboard API Response:', overviewRes);
@@ -68,6 +69,7 @@ export default function Dashboard() {
         const growthData = growthRes.data.data || growthRes.data;
         const bloodTypeData = bloodTypesRes.data.data || bloodTypesRes.data;
         const usersData = usersRes.data.data || usersRes.data;
+        const recentActivityData = activityRes.data.data?.logs || activityRes.data.logs || activityRes.data.data || [];
 
         console.log('Dashboard Data:', dashboardData);
         console.log('Growth Data:', growthData);
@@ -75,7 +77,12 @@ export default function Dashboard() {
         console.log('Users Data:', usersData);
 
         if (dashboardData && dashboardData.organizations) {
-          setData(dashboardData);
+          // Merge recent activity into dashboard data
+          const mergedData = {
+            ...dashboardData,
+            recentActivity: recentActivityData && recentActivityData.length > 0 ? recentActivityData : dashboardData.recentActivity || []
+          };
+          setData(mergedData);
           setChartData({
             monthlyData: growthData || [],
             bloodStockData: bloodTypeData || [],
@@ -406,15 +413,21 @@ export default function Dashboard() {
           <h3 className="text-lg font-semibold mb-4 text-gray-800 flex items-center">
             <Droplet className="w-5 h-5 mr-2 text-red-600" /> Blood Stock by Type
           </h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={bloodStockData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis dataKey="name" stroke="#6b7280" />
-              <YAxis stroke="#6b7280" />
-              <Tooltip contentStyle={{ backgroundColor: '#f3f4f6', border: 'none', borderRadius: '8px' }} />
-              <Bar dataKey="units" fill="#ef4444" radius={[8, 8, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+          {bloodStockData && bloodStockData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={bloodStockData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                <XAxis dataKey="name" stroke="#6b7280" />
+                <YAxis stroke="#6b7280" />
+                <Tooltip contentStyle={{ backgroundColor: '#f3f4f6', border: 'none', borderRadius: '8px' }} />
+                <Bar dataKey="units" fill="#ef4444" radius={[8, 8, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex items-center justify-center h-[300px] bg-gray-50 rounded-lg">
+              <p className="text-gray-500 text-center">No blood stock data available</p>
+            </div>
+          )}
         </div>
 
         {/* Alert Status Summary */}
@@ -515,16 +528,22 @@ export default function Dashboard() {
             <Activity className="w-5 h-5 mr-2 text-blue-600" /> Recent Activity
           </h3>
           <div className="space-y-3">
-            {data.recentActivity && data.recentActivity.slice(0, 5).map((activity, idx) => (
-              <div key={activity._id || idx} className="flex items-start gap-3 pb-3 border-b border-gray-100 last:border-b-0">
-                <div className="mt-1">{getActivityIcon(activity.action)}</div>
-                <div className="flex-1">
-                  <p className="text-sm font-semibold text-gray-800">{activity.action?.replace(/_/g, ' ') || 'Action'}</p>
-                  <p className="text-xs text-gray-600 mt-0.5">{activity.entity || 'N/A'}</p>
-                  <p className="text-xs text-gray-400 mt-1">{formatActivityTime(activity.timestamp)}</p>
+            {data.recentActivity && data.recentActivity.length > 0 ? (
+              data.recentActivity.slice(0, 5).map((activity, idx) => (
+                <div key={activity._id || idx} className="flex items-start gap-3 pb-3 border-b border-gray-100 last:border-b-0">
+                  <div className="mt-1">{getActivityIcon(activity.action)}</div>
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-gray-800">{activity.action?.replace(/_/g, ' ') || 'Action'}</p>
+                    <p className="text-xs text-gray-600 mt-0.5">{activity.entity || 'N/A'}</p>
+                    <p className="text-xs text-gray-400 mt-1">{formatActivityTime(activity.timestamp)}</p>
+                  </div>
                 </div>
+              ))
+            ) : (
+              <div className="flex items-center justify-center py-8 bg-gray-50 rounded-lg">
+                <p className="text-gray-500 text-center">No recent activity yet</p>
               </div>
-            ))}
+            )}
           </div>
         </div>
 

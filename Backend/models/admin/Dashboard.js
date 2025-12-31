@@ -287,14 +287,14 @@ class Dashboard {
     const breakdown = await stockCollection.aggregate([
       {
         $project: {
-          O_positive: "$stock.O+.units",
-          O_negative: "$stock.O-.units",
-          A_positive: "$stock.A+.units",
-          A_negative: "$stock.A-.units",
-          B_positive: "$stock.B+.units",
-          B_negative: "$stock.B-.units",
-          AB_positive: "$stock.AB+.units",
-          AB_negative: "$stock.AB-.units"
+          O_positive: "$bloodStock.O+.units",
+          O_negative: "$bloodStock.O-.units",
+          A_positive: "$bloodStock.A+.units",
+          A_negative: "$bloodStock.A-.units",
+          B_positive: "$bloodStock.B+.units",
+          B_negative: "$bloodStock.B-.units",
+          AB_positive: "$bloodStock.AB+.units",
+          AB_negative: "$bloodStock.AB-.units"
         }
       },
       {
