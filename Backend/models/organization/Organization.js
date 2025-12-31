@@ -11,7 +11,7 @@ export class Organization {
    */
   static async create(organizationData) {
     const db = getDB();
-    
+
     const organization = {
       _id: new ObjectId(),
       ...organizationData,
@@ -143,7 +143,7 @@ export class Organization {
 
     // Build filter
     let filter = {};
-    
+
     if (filters.type && ["hospital", "bloodbank", "ngo"].includes(filters.type.toLowerCase())) {
       filter.type = filters.type.toLowerCase();
     }
@@ -483,5 +483,74 @@ export class Organization {
     ];
 
     return await db.collection("organizations").aggregate(pipeline).toArray();
+  }
+  /**
+   * Search organizations by blood stock availability
+   * @param {string} bloodType - e.g., 'A+', 'O-'
+   * @param {number} minUnits - Minimum units required
+   * @param {string} city - Optional city filter
+   * @returns {Promise<Array>} List of organizations with stock
+   */
+  static async searchBloodStock(bloodType, minUnits = 1, city = null) {
+    const db = getDB();
+
+    // 1. Build query for blood_stock collection
+    // The user provided: bloodStock object inside the document, where each type has a 'units' field
+    const stockQuery = {
+      [`bloodStock.${bloodType}.units`]: { $gte: parseInt(minUnits) || 1 }
+    };
+
+    console.log(`[BLOOD_SEARCH] Primary Query on blood_stock:`, JSON.stringify(stockQuery));
+
+    // 2. Perform Aggregation
+    // - Match stock requirements
+    // - Lookup organization details using bloodBankId
+    // - Filter by city if provided
+    // - Project final shape
+
+    const pipeline = [
+      { $match: stockQuery },
+      {
+        $lookup: {
+          from: "organizations",
+          localField: "bloodBankId",
+          foreignField: "_id",
+          as: "organization"
+        }
+      },
+      { $unwind: "$organization" },
+      {
+        $project: {
+          _id: 1, // Stock ID
+          bloodBankId: 1,
+          bloodStock: 1, // Keep the stock object from blood_stock collection to display counts
+          lastStockUpdateAt: 1,
+
+          // Flatten needed organization fields so frontend doesn't break
+          name: "$organization.name",
+          organizationCode: "$organization.organizationCode",
+          type: "$organization.type",
+          email: "$organization.email",
+          phone: "$organization.phone",
+          address: "$organization.address",
+          location: "$organization.location",
+          status: "$organization.status"
+        }
+      }
+    ];
+
+    // Add City Filter if provided
+    if (city) {
+      pipeline.push({
+        $match: {
+          "location.city": new RegExp(city, "i")
+        }
+      });
+    }
+
+    const results = await db.collection("blood_stock").aggregate(pipeline).toArray();
+    console.log(`[BLOOD_SEARCH] Found ${results.length} results from merged blood_stock`);
+
+    return results;
   }
 }
