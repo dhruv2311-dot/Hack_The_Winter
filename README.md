@@ -233,7 +233,7 @@ This repository includes multiple focused documentation files. **Click on any fi
 - [🏗️ **ARCHITECTURE.md**](Main%20Documentation/Architecture.md) – Backend architecture and module design
 - [🗄️ **DATA_MODEL.md**](Main%20Documentation/DATA_MODEL.md) – Database schemas and relationships
 - [🚀 **ROUND2_ROADMAP.md**](Main%20Documentation/ROUND2_ROADMAP.md) – Planned improvements and feature expansion
-- [📈 **COMPETITIVE_ANALYSIS.md**](Main%20Documentation/Analytics copy.md) – Positioning against existing platforms
+- [📈 **COMPETITIVE_ANALYSIS.md**](Main%20Documentation/Analyticscopy.md) – Positioning against existing platforms
 
 ## Current Status (Round 1)
 
