@@ -8,6 +8,15 @@ import SuperAdminLogin from "./pages/SuperAdminLogin";
 import Register from "./pages/Register";
 import OrganizationRegistration from "./pages/OrganizationRegistration";
 import RegistrationStatus from "./pages/RegistrationStatus";
+import HospitalManagement from "./pages/superadmin/HospitalManagement";
+import HospitalDetails from "./pages/superadmin/HospitalDetails";
+import NGOManagement from "./pages/superadmin/NGOManagement";
+import NGODetails from "./pages/superadmin/NGODetails";
+import BloodBankManagement from "./pages/superadmin/BloodBankManagement";
+import BloodBankDetails from "./pages/superadmin/BloodBankDetails";
+import BloodStockManagement from "./pages/superadmin/BloodStockManagement";
+import ApprovalsManagement from "./pages/superadmin/ApprovalsManagement";
+import Settings from "./pages/superadmin/Settings";
 import BloodBankLayout from "./layouts/BloodBankLayout";
 import DashboardOverview from "./pages/bloodbank/DashboardOverview";
 import HospitalRequests from "./pages/bloodbank/HospitalRequests";
@@ -29,6 +38,8 @@ import NgoCamps from "./pages/ngo/CampManagement";
 import NgoSlots from "./pages/ngo/SlotManagement";
 import NgoDonors from "./pages/ngo/DonorRegistry";
 import NgoConnectivity from "./pages/ngo/ConnectivityGrid";
+import SuperAdminLayout from "./layouts/SuperAdminLayout";
+import SuperAdminDashboard from "./pages/superadmin/Dashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 export default function App() {
@@ -122,20 +133,27 @@ export default function App() {
           <Route path="connectivity" element={<NgoConnectivity />} />
         </Route>
 
-        {/* Superadmin Dashboard - Placeholder */}
+        {/* Superadmin Dashboard - Protected Routes */}
         <Route
-          path="/superadmin/dashboard"
+          path="/superadmin"
           element={
             <ProtectedRoute allowedRoles={["SUPERADMIN"]}>
-              <div className="min-h-screen flex items-center justify-center bg-gray-100">
-                <div className="text-center">
-                  <h1 className="text-3xl font-bold text-gray-800 mb-4">Superadmin Dashboard</h1>
-                  <p className="text-gray-600">Coming soon...</p>
-                </div>
-              </div>
+              <SuperAdminLayout />
             </ProtectedRoute>
           }
-        />
+        >
+          <Route index element={<Navigate to="/superadmin/dashboard" replace />} />
+          <Route path="dashboard" element={<SuperAdminDashboard />} />
+          <Route path="hospitals" element={<HospitalManagement />} />
+          <Route path="hospital/:id" element={<HospitalDetails />} />
+          <Route path="ngos" element={<NGOManagement />} />
+          <Route path="ngo/:id" element={<NGODetails />} />
+          <Route path="blood-banks" element={<BloodBankManagement />} />
+          <Route path="blood-bank/:id" element={<BloodBankDetails />} />
+          <Route path="blood-stock" element={<BloodStockManagement />} />
+          <Route path="approvals" element={<ApprovalsManagement />} />
+          <Route path="settings" element={<Settings />} />
+        </Route>
       </Routes>
     </>
   );
