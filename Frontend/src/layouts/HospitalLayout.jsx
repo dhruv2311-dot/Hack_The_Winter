@@ -5,6 +5,7 @@ import { getHospitalById } from "../services/hospitalApi";
 
 const navItems = [
   { label: "Dashboard Overview", path: "/hospital/overview" },
+  { label: "Search Blood Stock", path: "/hospital/search-blood" },
   { label: "Blood Bank Requests", path: "/hospital/blood-requests" },
   { label: "NGO Donation Drives", path: "/hospital/ngo-drives" },
   { label: "Admin & Verification", path: "/hospital/admin" },
