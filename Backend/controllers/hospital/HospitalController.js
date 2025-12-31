@@ -2,6 +2,8 @@ import Hospital from "../../models/hospital/Hospital.js";
 import HospitalNgoDrive from "../../models/hospital/HospitalNgoDrive.js";
 import HospitalAdminAction from "../../models/hospital/HospitalAdminAction.js";
 import HospitalBloodRequest from "../../models/hospital/HospitalBloodRequest.js";
+import { Organization } from "../../models/organization/Organization.js";
+import { getDB } from "../../config/db.js";
 
 export class HospitalController {
     // ============= HOSPITAL CRUD =============
@@ -73,6 +75,63 @@ export class HospitalController {
             res.status(500).json({
                 success: false,
                 message: "Failed to create hospital",
+                error: error.message
+            });
+        }
+    }
+
+    /**
+     * Search for blood availability in other organizations
+     * GET /api/hospitals/blood/search?bloodType=O+&minUnits=1&city=Mumbai
+     */
+    static async searchBloodAvailability(req, res) {
+        try {
+            const { bloodType, minUnits, city } = req.query;
+
+            if (!bloodType) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Blood type is required"
+                });
+            }
+
+            // 1. Search Organizations (Blood Banks)
+            let results = await Organization.searchBloodStock(
+                bloodType,
+                minUnits || 1,
+                city
+            );
+
+            let source = 'bloodbank';
+
+            // 2. If no organizations found, search Donors
+            if (results.length === 0) {
+                console.log(`[BLOOD_SEARCH] No organizations found for ${bloodType}. Searching donors...`);
+                const db = getDB();
+                // Ensure db connection is active (it should be since server is running)
+
+                const donorQuery = { bloodGroup: bloodType };
+                if (city) {
+                    donorQuery.city = new RegExp(city, "i");
+                }
+
+                // Fetch donors
+                results = await db.collection("donors").find(donorQuery).toArray();
+                source = 'donor';
+                console.log(`[BLOOD_SEARCH] Found ${results.length} donors.`);
+            }
+
+            res.status(200).json({
+                success: true,
+                count: results.length,
+                source: source,
+                data: results
+            });
+        } catch (error) {
+            console.error("Error searching blood availability:", error);
+            res.status(500).json({
+                success: false,
+                message: "Failed to search blood availability",
                 error: error.message
             });
         }
