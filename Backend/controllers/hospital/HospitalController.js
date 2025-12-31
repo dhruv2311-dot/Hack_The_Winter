@@ -89,12 +89,30 @@ export class HospitalController {
 
             console.log('\n[GET_HOSPITAL_BY_ID] Received ID:', id);
             console.log('[GET_HOSPITAL_BY_ID] ID Type:', typeof id);
-            console.log('[GET_HOSPITAL_BY_ID] ID Length:', id.length);
+            console.log('[GET_HOSPITAL_BY_ID] ID Length:', id?.length);
+
+            // Validate ID parameter
+            if (!id || id === 'null' || id === 'undefined') {
+                console.warn('[GET_HOSPITAL_BY_ID] Invalid ID received:', id);
+                return res.status(400).json({
+                    success: false,
+                    message: "Invalid hospital ID. Please login again to refresh your session."
+                });
+            }
 
             // Import getDB to access organizations collection
             const { getDB } = await import("../../config/db.js");
             const { ObjectId } = await import("mongodb");
             const db = getDB();
+
+            // Validate ObjectId format
+            if (!ObjectId.isValid(id)) {
+                console.warn('[GET_HOSPITAL_BY_ID] Invalid ObjectId format:', id);
+                return res.status(400).json({
+                    success: false,
+                    message: "Invalid hospital ID format"
+                });
+            }
 
             // Fetch from organizations collection instead of hospitals
             const organization = await db.collection("organizations").findOne({

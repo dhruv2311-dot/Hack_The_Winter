@@ -91,14 +91,14 @@ export default function HospitalLayout() {
   );
 
   return (
-    <div className="min-h-screen bg-[#fff6f2] text-[#2d1617] font-['Inter',sans-serif]">
+    <div className="min-h-screen bg-gray-100 text-gray-900 font-['Inter',sans-serif]">
       <div className="flex min-h-screen">
         <aside className="hidden lg:flex sticky top-0 h-screen w-80 shrink-0 flex-col gap-8 bg-gradient-to-b from-[#5c0f14] via-[#75161d] to-[#9b1e27] px-8 py-10 text-white shadow-2xl">
           <SidebarContent />
         </aside>
 
         <div className="flex flex-1 flex-col">
-          <header className="sticky top-0 z-20 border-b border-[#ebd7d1] bg-[#fffdfb]/90 px-4 py-5 backdrop-blur md:px-10">
+          <header className="sticky top-0 z-20 border-b border-gray-200 bg-white px-4 py-5 shadow-sm md:px-10">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div className="flex items-center gap-3">
                 <button
@@ -114,11 +114,11 @@ export default function HospitalLayout() {
                   </div>
                 </button>
                 <div>
-                  <p className="text-xs uppercase tracking-wider text-[#8f0f1a] font-medium">
+                  <p className="text-xs uppercase tracking-wider text-red-700 font-bold">
                     {loading ? 'Loading...' : (hospital?.city || 'City')}
                   </p>
                   <div className="mt-2 flex flex-wrap items-center gap-3">
-                    <h2 className="text-2xl font-bold text-[#300e11]">
+                    <h2 className="text-2xl font-bold text-gray-900">
                       {loading ? 'Loading...' : (hospital?.name || 'Hospital')}
                     </h2>
                     {hospital && (
@@ -131,7 +131,7 @@ export default function HospitalLayout() {
                       </span>
                     )}
                   </div>
-                  <p className="text-sm text-[#7a4c4c] mt-1">
+                  <p className="text-sm text-gray-600 mt-1 font-medium">
                     Smart Emergency Blood Network • Hospital Role
                   </p>
                 </div>
@@ -140,13 +140,13 @@ export default function HospitalLayout() {
               <div className="flex flex-wrap gap-3 items-center">
                 <Link
                   to="/hospital/profile"
-                  className="rounded-full border border-[#f3c9c0] bg-white/70 px-6 py-2 text-sm font-semibold text-[#8f0f1a] shadow-[0_10px_25px_rgba(143,15,26,0.18)] transition hover:bg-white"
+                  className="rounded-full border-2 border-red-200 bg-white px-6 py-2 text-sm font-semibold text-red-700 shadow-md transition hover:border-red-700 hover:shadow-lg"
                 >
                   View Profile
                 </Link>
                 <button
                   onClick={logout}
-                  className="rounded-full bg-gradient-to-r from-[#8f0f1a] to-[#c62832] px-6 py-2 text-sm font-semibold text-white shadow-[0_18px_40px_rgba(143,15,26,0.35)] transition hover:scale-105"
+                  className="rounded-full bg-gradient-to-r from-[#8f0f1a] to-[#c62832] px-6 py-2 text-sm font-semibold text-white shadow-lg transition hover:scale-105 hover:shadow-xl"
                 >
                   Logout
                 </button>
@@ -154,7 +154,7 @@ export default function HospitalLayout() {
             </div>
           </header>
 
-          <main className="flex-1 px-4 py-8 md:px-10 bg-gradient-to-b from-white/90 to-[#fff1ec]">
+          <main className="flex-1 px-4 py-8 md:px-10 bg-gradient-to-b from-gray-50 to-white">
             <Outlet />
           </main>
         </div>

@@ -99,11 +99,11 @@ export default function HospitalNgoDrives() {
 
   if (loading) {
     return (
-      <section className="space-y-6 rounded-3xl border border-white/80 bg-white/95 p-6 shadow-[0_25px_60px_rgba(77,10,15,0.12)]">
+      <section className="space-y-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-lg">
         <div className="flex items-center justify-center py-20">
           <div className="text-center">
-            <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-solid border-[#8f0f1a] border-r-transparent"></div>
-            <p className="mt-4 text-sm text-[#7a4c4c]">Loading NGO drives...</p>
+            <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-solid border-red-600 border-r-transparent"></div>
+            <p className="mt-4 text-sm text-gray-700 font-medium">Loading NGO drives...</p>
           </div>
         </div>
       </section>
@@ -112,13 +112,13 @@ export default function HospitalNgoDrives() {
 
   if (error) {
     return (
-      <section className="space-y-6 rounded-3xl border border-white/80 bg-white/95 p-6 shadow-[0_25px_60px_rgba(77,10,15,0.12)]">
-        <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-center">
-          <p className="text-lg font-semibold text-red-800">Error Loading Drives</p>
-          <p className="mt-2 text-sm text-red-600">{error}</p>
+      <section className="space-y-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-lg">
+        <div className="rounded-2xl border-2 border-red-300 bg-red-50 p-6 text-center">
+          <p className="text-lg font-bold text-red-900">Error Loading Drives</p>
+          <p className="mt-2 text-sm text-red-700 font-medium">{error}</p>
           <button
             onClick={fetchData}
-            className="mt-4 rounded-full bg-red-600 px-6 py-2 text-sm font-semibold text-white hover:bg-red-700"
+            className="mt-4 rounded-full bg-red-600 px-6 py-2 text-sm font-semibold text-white hover:bg-red-700 shadow-lg transition"
           >
             Retry
           </button>
@@ -128,26 +128,26 @@ export default function HospitalNgoDrives() {
   }
 
   return (
-    <section className="space-y-6 rounded-3xl border border-white/80 bg-white/95 p-6 shadow-[0_25px_60px_rgba(77,10,15,0.12)]">
+    <section className="space-y-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-lg">
       <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <p className="text-xs uppercase tracking-[0.35em] text-[#8f0f1a]">
+          <p className="text-xs uppercase tracking-widest text-red-700 font-bold">
             NGO Donation Drives
           </p>
-          <h3 className="text-2xl font-semibold text-[#2f1012]">
+          <h3 className="text-2xl font-bold text-gray-900">
             Collaborative Drives
           </h3>
-          <p className="text-sm text-[#7a4c4c]">
+          <p className="text-sm text-gray-600">
             Partner with trusted NGOs to maintain critical reserves.
           </p>
         </div>
-        <div className="flex flex-wrap gap-3 text-xs font-semibold text-[#7a4c4c]">
+        <div className="flex flex-wrap gap-3 text-xs font-semibold text-gray-700">
           <label className="flex items-center gap-2">
             Status
             <select
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
-              className="rounded-full border border-[#f3c9c0] bg-white px-3 py-1 focus:border-[#8f0f1a]"
+              className="rounded-full border-2 border-gray-300 bg-white px-3 py-1 focus:border-red-600 focus:outline-none"
             >
               <option value="ALL">All</option>
               <option value="PENDING">Pending</option>
@@ -159,7 +159,7 @@ export default function HospitalNgoDrives() {
           <button
             onClick={() => setIsModalOpen(true)}
             disabled={actionsLocked}
-            className="rounded-full bg-linear-to-r from-[#8f0f1a] to-[#c62832] px-5 py-2 text-xs font-semibold text-white shadow-[0_15px_35px_rgba(143,15,26,0.25)] transition hover:scale-105 disabled:cursor-not-allowed disabled:opacity-40"
+            className="rounded-full bg-gradient-to-r from-[#8f0f1a] to-[#c62832] px-5 py-2 text-xs font-semibold text-white shadow-lg transition hover:scale-105 disabled:cursor-not-allowed disabled:opacity-40"
           >
             + New Drive Request
           </button>
@@ -167,15 +167,15 @@ export default function HospitalNgoDrives() {
       </header>
 
       {actionsLocked && (
-        <p className="rounded-2xl border border-[#f0c18c] bg-[#fff3e4] px-4 py-3 text-xs font-semibold uppercase tracking-[0.3em] text-[#b05f09]">
+        <p className="rounded-xl border-2 border-orange-200 bg-orange-50 px-4 py-3 text-xs font-semibold uppercase tracking-wider text-orange-700">
           Drive creation disabled until verification completes.
         </p>
       )}
 
       {filtered.length === 0 ? (
-        <div className="rounded-2xl border border-[#f6ddd4] bg-white p-12 text-center">
-          <p className="text-sm text-[#7a4c4c]">No NGO drives found</p>
-          <p className="mt-1 text-xs text-[#8b6161]">
+        <div className="rounded-2xl border border-gray-200 bg-white p-12 text-center">
+          <p className="text-sm text-gray-600 font-medium">No NGO drives found</p>
+          <p className="mt-1 text-xs text-gray-500">
             {filter !== "ALL" 
               ? "Try adjusting your filter" 
               : "Create your first NGO drive to get started"}
@@ -186,14 +186,14 @@ export default function HospitalNgoDrives() {
           {filtered.map((drive) => (
             <article
               key={drive._id}
-              className="rounded-2xl border border-[#f6ddd4] bg-[#fff9f6] p-5 shadow-[0_20px_45px_rgba(77,10,15,0.08)]"
+              className="rounded-2xl border border-gray-200 bg-white p-5 shadow-md hover:shadow-lg transition-shadow"
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <h4 className="text-xl font-semibold text-[#2f1012]">
+                  <h4 className="text-xl font-bold text-gray-900">
                     {drive.driveTitle || drive.driveName || "Blood Donation Drive"}
                   </h4>
-                  <p className="text-sm text-[#7a4c4c]">
+                  <p className="text-sm text-gray-600 font-medium">
                     {drive.ngoId?.name || drive.ngoId || "NGO"} • {formatDate(drive.driveDate)}
                   </p>
                 </div>
@@ -206,21 +206,21 @@ export default function HospitalNgoDrives() {
                 </span>
               </div>
 
-              <div className="mt-4 flex items-center justify-between rounded-2xl border border-white/70 bg-white/70 px-4 py-3 text-sm text-[#553334]">
+              <div className="mt-4 flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm">
                 <div>
-                  <p className="text-xs uppercase tracking-[0.3em] text-[#8f0f1a]">
+                  <p className="text-xs uppercase tracking-wider text-red-700 font-bold">
                     Expected Donors
                   </p>
-                  <p className="text-2xl font-semibold text-[#2f1012]">
+                  <p className="text-2xl font-bold text-gray-900">
                     {drive.expectedDonors || 0}
                   </p>
                 </div>
                 {drive.actualDonors > 0 && (
                   <div>
-                    <p className="text-xs uppercase tracking-[0.3em] text-[#1f7a3a]">
+                    <p className="text-xs uppercase tracking-wider text-green-700 font-bold">
                       Actual Donors
                     </p>
-                    <p className="text-2xl font-semibold text-[#1f7a3a]">
+                    <p className="text-2xl font-bold text-green-700">
                       {drive.actualDonors}
                     </p>
                   </div>
@@ -228,12 +228,12 @@ export default function HospitalNgoDrives() {
               </div>
 
               {drive.description && (
-                <p className="mt-3 text-xs text-[#8b6161]">
+                <p className="mt-3 text-xs text-gray-600">
                   <strong>Description:</strong> {drive.description}
                 </p>
               )}
                 {drive.location && (
-                <p className="mt-1 text-xs text-[#8b6161]">
+                <p className="mt-1 text-xs text-gray-600">
                   <strong>Location:</strong> {drive.location.venueName}, {drive.location.city}
                 </p>
               )}
@@ -244,22 +244,22 @@ export default function HospitalNgoDrives() {
                   <button
                     disabled={actionsLocked}
                     onClick={() => handleStatusUpdate(drive._id, "COMPLETED")}
-                    className="rounded-full border border-[#b6d8f2] px-4 py-2 text-[#185a9d] transition hover:bg-[#e7f3ff] disabled:cursor-not-allowed disabled:opacity-40"
+                    className="rounded-full border-2 border-blue-300 bg-blue-50 px-4 py-2 text-blue-700 font-semibold transition hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     Mark Completed
                   </button>
                 )}
                 {drive.status === "PENDING" && (
-                  <span className="text-[#b05f09]">Awaiting NGO confirmation</span>
+                  <span className="text-orange-700 font-bold">Awaiting NGO confirmation</span>
                 )}
                 {drive.status === "COMPLETED" && (
-                  <span className="text-[#185a9d]">✓ Drive Completed</span>
+                  <span className="text-blue-700 font-bold">✓ Drive Completed</span>
                 )}
                 {drive.status === "REJECTED" && (
-                  <span className="text-[#9e121c]">Declined by NGO</span>
+                  <span className="text-red-700 font-bold">Declined by NGO</span>
                 )}
                   {drive.status === "SCHEDULED" && (
-                  <span className="text-[#475569]">Scheduled</span>
+                  <span className="text-gray-700 font-bold">Scheduled</span>
                 )}
               </div>
             </article>

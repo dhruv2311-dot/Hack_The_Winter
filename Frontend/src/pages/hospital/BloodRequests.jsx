@@ -18,9 +18,9 @@ const statusClasses = {
 
 const urgencyClasses = {
   CRITICAL:
-    "bg-linear-to-r from-[#8c111c]/20 to-[#c62832]/25 text-[#7c0d16] border border-[#f3a8b3]",
-  URGENT: "bg-[#fff1e1] text-[#b35c12] border border-[#f6c898]",
-  NORMAL: "bg-[#fef6e0] text-[#9d7b08] border border-[#f3e3a2]",
+    "bg-gradient-to-r from-red-50 to-red-100 text-red-800 border-2 border-red-300",
+  URGENT: "bg-orange-50 text-orange-700 border border-orange-300",
+  NORMAL: "bg-yellow-50 text-yellow-700 border border-yellow-300",
 };
 
 const formatDate = (iso) =>
@@ -118,11 +118,11 @@ export default function HospitalBloodRequests() {
 
   if (loading) {
     return (
-      <section className="space-y-6 rounded-3xl border border-white/80 bg-white/95 p-6 shadow-[0_25px_60px_rgba(77,10,15,0.12)]">
+      <section className="space-y-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-lg">
         <div className="flex items-center justify-center py-20">
           <div className="text-center">
-            <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-solid border-[#8f0f1a] border-r-transparent"></div>
-            <p className="mt-4 text-sm text-[#7a4c4c]">Loading blood requests...</p>
+            <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-solid border-red-600 border-r-transparent"></div>
+            <p className="mt-4 text-sm text-gray-700 font-medium">Loading blood requests...</p>
           </div>
         </div>
       </section>
@@ -131,13 +131,13 @@ export default function HospitalBloodRequests() {
 
   if (error) {
     return (
-      <section className="space-y-6 rounded-3xl border border-white/80 bg-white/95 p-6 shadow-[0_25px_60px_rgba(77,10,15,0.12)]">
-        <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-center">
-          <p className="text-lg font-semibold text-red-800">Error Loading Requests</p>
-          <p className="mt-2 text-sm text-red-600">{error}</p>
+      <section className="space-y-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-lg">
+        <div className="rounded-2xl border-2 border-red-300 bg-red-50 p-6 text-center">
+          <p className="text-lg font-bold text-red-900">Error Loading Requests</p>
+          <p className="mt-2 text-sm text-red-700 font-medium">{error}</p>
           <button
             onClick={fetchData}
-            className="mt-4 rounded-full bg-red-600 px-6 py-2 text-sm font-semibold text-white hover:bg-red-700"
+            className="mt-4 rounded-full bg-red-600 px-6 py-2 text-sm font-semibold text-white hover:bg-red-700 shadow-lg transition"
           >
             Retry
           </button>
@@ -147,26 +147,26 @@ export default function HospitalBloodRequests() {
   }
 
   return (
-    <section className="space-y-6 rounded-3xl border border-white/80 bg-white/95 p-6 shadow-[0_25px_60px_rgba(77,10,15,0.12)]">
+    <section className="space-y-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-lg">
       <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <p className="text-xs uppercase tracking-[0.35em] text-[#8f0f1a]">
+          <p className="text-xs uppercase tracking-widest text-red-700 font-bold">
             Blood Bank Requests
           </p>
-          <h3 className="text-2xl font-semibold text-[#2f1012]">
+          <h3 className="text-2xl font-bold text-gray-900">
             Emergency Fulfillment
           </h3>
-          <p className="text-sm text-[#7a4c4c]">
+          <p className="text-sm text-gray-600">
             Track every request placed with nearby verified banks.
           </p>
         </div>
-        <div className="flex flex-wrap gap-3 text-xs font-semibold text-[#7a4c4c]">
+        <div className="flex flex-wrap gap-3 text-xs font-semibold text-gray-700">
           <label className="flex items-center gap-2">
             Status
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="rounded-full border border-[#f3c9c0] bg-white px-3 py-1 focus:border-[#8f0f1a]"
+              className="rounded-full border-2 border-gray-300 bg-white px-3 py-1 focus:border-red-600 focus:outline-none"
             >
               <option value="ALL">All</option>
               <option value="PENDING">Pending</option>
@@ -180,7 +180,7 @@ export default function HospitalBloodRequests() {
             <select
               value={urgencyFilter}
               onChange={(e) => setUrgencyFilter(e.target.value)}
-              className="rounded-full border border-[#f3c9c0] bg-white px-3 py-1 focus:border-[#8f0f1a]"
+              className="rounded-full border-2 border-gray-300 bg-white px-3 py-1 focus:border-red-600 focus:outline-none"
             >
               <option value="ALL">All</option>
               <option value="CRITICAL">Critical</option>
@@ -191,13 +191,13 @@ export default function HospitalBloodRequests() {
         </div>
       </header>
 
-      <div className="rounded-2xl border border-[#f6ddd4] bg-[#fff9f6] p-4 text-sm text-[#7a4c4c]">
+      <div className="rounded-xl border-2 border-blue-200 bg-blue-50 p-4 text-sm">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
-            <p className="font-semibold text-[#2f1012]">
+            <p className="font-bold text-gray-900">
               Need more units immediately?
             </p>
-            <p className="text-xs">
+            <p className="text-xs text-gray-700">
               Create a high-priority request that alerts nearby blood banks within
               seconds.
             </p>
@@ -205,31 +205,31 @@ export default function HospitalBloodRequests() {
           <button
             onClick={() => setIsModalOpen(true)}
             disabled={actionsLocked}
-            className="rounded-full bg-linear-to-r from-[#8f0f1a] to-[#c62832] px-5 py-2 text-xs font-semibold text-white shadow-[0_15px_35px_rgba(143,15,26,0.25)] transition hover:scale-105 disabled:cursor-not-allowed disabled:opacity-40"
+            className="rounded-full bg-gradient-to-r from-[#8f0f1a] to-[#c62832] px-5 py-2 text-xs font-semibold text-white shadow-lg transition hover:scale-105 disabled:cursor-not-allowed disabled:opacity-40"
           >
             + New Blood Request
           </button>
         </div>
         {actionsLocked && (
-          <p className="mt-2 text-xs font-semibold uppercase tracking-[0.3em] text-[#b05f09]">
+          <p className="mt-2 text-xs font-semibold uppercase tracking-wider text-orange-700">
             Disabled until verification completes
           </p>
         )}
       </div>
 
       {filteredRequests.length === 0 ? (
-        <div className="rounded-2xl border border-[#f6ddd4] bg-white p-12 text-center">
-          <p className="text-sm text-[#7a4c4c]">No blood requests found</p>
-          <p className="mt-1 text-xs text-[#8b6161]">
+        <div className="rounded-2xl border border-gray-200 bg-white p-12 text-center">
+          <p className="text-sm text-gray-600 font-medium">No blood requests found</p>
+          <p className="mt-1 text-xs text-gray-500">
             {statusFilter !== "ALL" || urgencyFilter !== "ALL" 
               ? "Try adjusting your filters" 
               : "Create your first blood request to get started"}
           </p>
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-2xl border border-[#f6ddd4]">
-          <table className="min-w-full text-left text-sm text-[#553334]">
-            <thead className="bg-[#fdf2ee] text-xs uppercase tracking-[0.3em] text-[#8f0f1a]">
+        <div className="overflow-x-auto rounded-2xl border border-gray-200">
+          <table className="min-w-full text-left text-sm text-gray-800">
+            <thead className="bg-gray-100 text-xs uppercase tracking-wider text-gray-700 font-bold">
               <tr>
                 <th className="px-6 py-4">Blood Bank</th>
                 <th className="px-6 py-4">Blood Group</th>
@@ -250,11 +250,11 @@ export default function HospitalBloodRequests() {
                       : "border-l-4 border-l-transparent"
                   }`}
                 >
-                  <td className="px-6 py-4 font-semibold text-[#2f1012]">
+                  <td className="px-6 py-4 font-bold text-gray-900">
                     {req.bloodBankId?.name || req.bloodBankId || "Blood Bank"}
                   </td>
                   <td className="px-6 py-4">
-                    <span className="rounded-full border border-[#f3c9c0] bg-[#fff1ed] px-3 py-1 text-xs font-semibold text-[#8f0f1a]">
+                    <span className="rounded-full border-2 border-red-300 bg-red-50 px-3 py-1 text-xs font-bold text-red-800">
                       {req.bloodGroup}
                     </span>
                   </td>
@@ -277,7 +277,7 @@ export default function HospitalBloodRequests() {
                       {req.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-xs text-[#8b6161]">
+                  <td className="px-6 py-4 text-xs text-gray-600">
                     {formatDate(req.createdAt)}
                   </td>
                   <td className="px-6 py-4">

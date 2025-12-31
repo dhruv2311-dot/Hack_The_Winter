@@ -12,17 +12,28 @@ export const AuthProvider = ({ children }) => {
   // Load user from localStorage on mount
   useEffect(() => {
     const storedToken = localStorage.getItem("token");
-    const storedRole = localStorage.getItem("role");
-    const storedEmail = localStorage.getItem("email");
-    const storedName = localStorage.getItem("name");
+    const storedUser = localStorage.getItem("user");
 
-    if (storedToken && storedRole) {
-      setToken(storedToken);
-      setUser({
-        role: storedRole,
-        email: storedEmail,
-        name: storedName,
-      });
+    if (storedToken && storedUser) {
+      try {
+        // Try to parse the stored user object
+        const parsedUser = JSON.parse(storedUser);
+        setToken(storedToken);
+        setUser(parsedUser);
+        console.log("✅ User loaded from localStorage:", parsedUser);
+      } catch (error) {
+        console.error("Failed to parse stored user data:", error);
+        // Fallback: try to get individual items
+        const storedRole = localStorage.getItem("role");
+        if (storedRole) {
+          setToken(storedToken);
+          setUser({
+            role: storedRole,
+            email: localStorage.getItem("email"),
+            name: localStorage.getItem("name"),
+          });
+        }
+      }
     }
     setLoading(false);
   }, []);
@@ -38,7 +49,13 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem("email", userData.email);
     localStorage.setItem("name", userData.name);
     
+    // ✅ Store organizationId for easy access by components
+    if (userData.organizationId) {
+      localStorage.setItem("organizationId", userData.organizationId);
+    }
+    
     console.log("✅ Login successful - User data saved:", userData);
+    console.log("✅ Organization ID saved:", userData.organizationId);
   };
 
   const logout = () => {
@@ -50,6 +67,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem("role");
     localStorage.removeItem("email");
     localStorage.removeItem("name");
+    localStorage.removeItem("organizationId"); // ✅ Remove organizationId
     console.log("[LOGOUT] Cleared localStorage");
     
     // Update state

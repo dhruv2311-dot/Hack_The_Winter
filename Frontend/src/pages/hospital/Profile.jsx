@@ -407,11 +407,11 @@ export default function HospitalProfile() {
 
   if (loading) {
     return (
-      <section className="space-y-6 rounded-3xl border border-white/80 bg-white/95 p-6 shadow-[0_30px_60px_rgba(77,10,15,0.12)]">
+      <section className="space-y-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-lg">
         <div className="flex items-center justify-center py-20">
           <div className="text-center">
-            <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-solid border-[#8f0f1a] border-r-transparent"></div>
-            <p className="mt-4 text-sm text-[#7a4c4c]">Loading profile...</p>
+            <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-solid border-red-600 border-r-transparent"></div>
+            <p className="mt-4 text-sm text-gray-700 font-medium">Loading profile...</p>
           </div>
         </div>
       </section>
@@ -420,13 +420,13 @@ export default function HospitalProfile() {
 
   if (error) {
     return (
-      <section className="space-y-6 rounded-3xl border border-white/80 bg-white/95 p-6 shadow-[0_30px_60px_rgba(77,10,15,0.12)]">
-        <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-center">
-          <p className="text-lg font-semibold text-red-800">Error Loading Profile</p>
-          <p className="mt-2 text-sm text-red-600">{error}</p>
+      <section className="space-y-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-lg">
+        <div className="rounded-2xl border-2 border-red-300 bg-red-50 p-6 text-center">
+          <p className="text-lg font-bold text-red-900">Error Loading Profile</p>
+          <p className="mt-2 text-sm text-red-700 font-medium">{error}</p>
           <button
             onClick={fetchHospitalProfile}
-            className="mt-4 rounded-full bg-red-600 px-6 py-2 text-sm font-semibold text-white hover:bg-red-700"
+            className="mt-4 rounded-full bg-red-600 px-6 py-2 text-sm font-semibold text-white hover:bg-red-700 shadow-lg transition"
           >
             Retry
           </button>
@@ -440,29 +440,29 @@ export default function HospitalProfile() {
   }
 
   return (
-    <section className="space-y-6 rounded-3xl border border-white/80 bg-white/95 p-6 shadow-[0_30px_60px_rgba(77,10,15,0.12)]">
+    <section className="space-y-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-lg">
       <header className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
         <div>
-          <p className="text-xs uppercase tracking-[0.35em] text-[#8f0f1a]">
+          <p className="text-xs uppercase tracking-widest text-red-700 font-bold">
             Profile & Settings
           </p>
-          <h3 className="text-2xl font-semibold text-[#2f1012]">
+          <h3 className="text-2xl font-bold text-gray-900">
             Hospital Identity
           </h3>
-          <p className="text-sm text-[#7a4c4c]">
+          <p className="text-sm text-gray-600">
             Maintain licensed information synced with SEBN compliance desk.
           </p>
         </div>
         <div className="flex gap-2">
           <button 
             onClick={handleEditClick}
-            className="rounded-full border border-[#f3c9c0] px-5 py-2 text-xs font-semibold text-[#8f0f1a] transition hover:border-[#8f0f1a]"
+            className="rounded-full border-2 border-red-200 bg-white px-5 py-2 text-xs font-semibold text-red-700 transition hover:border-red-700 hover:shadow-md"
           >
             Update Details
           </button>
           <button 
             onClick={handleDownloadSOPPack}
-            className="rounded-full bg-linear-to-r from-[#8f0f1a] to-[#c62832] px-5 py-2 text-xs font-semibold text-white shadow-[0_15px_35px_rgba(143,15,26,0.25)] transition hover:scale-105"
+            className="rounded-full bg-gradient-to-r from-[#8f0f1a] to-[#c62832] px-5 py-2 text-xs font-semibold text-white shadow-lg transition hover:scale-105"
           >
             Download SOP Pack
           </button>
@@ -470,26 +470,26 @@ export default function HospitalProfile() {
       </header>
 
       <div className="grid gap-6 md:grid-cols-2">
-        <article className="rounded-2xl border border-[#f6ddd4] bg-[#fff9f6] p-5">
-          <p className="text-xs uppercase tracking-[0.3em] text-[#b05f09]">
+        <article className="rounded-2xl border border-gray-200 bg-white p-5 shadow-md">
+          <p className="text-xs uppercase tracking-wider text-orange-700 font-bold">
             Registration Details
           </p>
-          <dl className="mt-4 space-y-3 text-sm text-[#553334]">
-            <div className="flex justify-between border-b border-[#f6ddd4] pb-2">
+          <dl className="mt-4 space-y-3 text-sm text-gray-700">
+            <div className="flex justify-between border-b border-gray-200 pb-2">
               <dt>Hospital Name</dt>
-              <dd className="font-semibold text-[#2f1012]">
+              <dd className="font-bold text-gray-900">
                 {hospital.name}
               </dd>
             </div>
-            <div className="flex justify-between border-b border-[#f6ddd4] pb-2">
+            <div className="flex justify-between border-b border-gray-200 pb-2">
               <dt>Hospital Code</dt>
-              <dd className="font-semibold text-[#2f1012]">
+              <dd className="font-bold text-gray-900">
                 {hospital.hospitalCode || "N/A"}
               </dd>
             </div>
-            <div className="flex justify-between border-b border-[#f6ddd4] pb-2">
+            <div className="flex justify-between border-b border-gray-200 pb-2">
               <dt>Registration Number</dt>
-              <dd className="font-semibold text-[#2f1012]">
+              <dd className="font-bold text-gray-900">
                 {hospital.registrationNumber}
               </dd>
             </div>
@@ -502,26 +502,26 @@ export default function HospitalProfile() {
           </dl>
         </article>
 
-        <article className="rounded-2xl border border-[#f6ddd4] bg-[#fff9f6] p-5">
-          <p className="text-xs uppercase tracking-[0.3em] text-[#b05f09]">
+        <article className="rounded-2xl border border-gray-200 bg-white p-5 shadow-md">
+          <p className="text-xs uppercase tracking-wider text-orange-700 font-bold">
             Contact
           </p>
-          <dl className="mt-4 space-y-3 text-sm text-[#553334]">
-            <div className="flex justify-between border-b border-[#f6ddd4] pb-2">
+          <dl className="mt-4 space-y-3 text-sm text-gray-700">
+            <div className="flex justify-between border-b border-gray-200 pb-2">
               <dt>Email</dt>
-              <dd className="font-semibold text-[#2f1012]">
+              <dd className="font-bold text-gray-900">
                 {hospital.email}
               </dd>
             </div>
-            <div className="flex justify-between border-b border-[#f6ddd4] pb-2">
+            <div className="flex justify-between border-b border-gray-200 pb-2">
               <dt>Phone</dt>
-              <dd className="font-semibold text-[#2f1012]">
+              <dd className="font-bold text-gray-900">
                 {hospital.phone}
               </dd>
             </div>
             <div className="flex justify-between">
               <dt>City</dt>
-              <dd className="font-semibold text-[#2f1012]">
+              <dd className="font-bold text-gray-900">
                 {hospital.location?.city || hospital.city || "N/A"}
               </dd>
             </div>
@@ -761,7 +761,7 @@ export default function HospitalProfile() {
                 <button
                   type="submit"
                   disabled={updating}
-                  className="flex-1 rounded-xl bg-linear-to-r from-[#8f0f1a] to-[#c62832] py-3 text-sm font-semibold text-white shadow-lg transition hover:scale-[1.02] disabled:opacity-70"
+                  className="flex-1 rounded-xl bg-gradient-to-r from-[#8f0f1a] to-[#c62832] py-3 text-sm font-semibold text-white shadow-lg transition hover:scale-[1.02] disabled:opacity-70"
                 >
                   {updating ? "Updating..." : "Save Changes"}
                 </button>
