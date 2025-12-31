@@ -168,7 +168,7 @@ export default function CampManagement() {
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 rounded-full bg-linear-to-r from-[#ff4d6d] to-[#ff7b9c] px-5 py-3 text-sm font-semibold uppercase tracking-[0.3em] text-white shadow-[0_18px_45px_rgba(255,77,109,0.35)] disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 rounded-full bg-gradient-to-r from-[#ff4d6d] to-[#ff7b9c] px-5 py-3 text-sm font-semibold uppercase tracking-[0.3em] text-white shadow-[0_18px_45px_rgba(255,77,109,0.35)] disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? "Creating..." : "Submit Camp"}
             </button>
@@ -413,7 +413,7 @@ export default function CampManagement() {
                   </button>
                   <button
                     type="submit"
-                    className="rounded-full bg-linear-to-r from-[#ff4d6d] to-[#ff7b9c] px-6 py-3 text-sm font-semibold text-white shadow-[0_18px_45px_rgba(255,77,109,0.35)]"
+                    className="rounded-full bg-gradient-to-r from-[#ff4d6d] to-[#ff7b9c] px-6 py-3 text-sm font-semibold text-white shadow-[0_18px_45px_rgba(255,77,109,0.35)]"
                   >
                     Save Changes
                   </button>
