@@ -251,3 +251,8 @@ SEBN currently focuses exclusively on blood emergency management. The architectu
 ## Conclusion
 
 SEBN aims to replace fragmented and manual blood search processes with a trusted, automated, and scalable emergency blood network, enabling faster response times and better coordination during critical medical situations.
+v
+## LINKS
+1) DEMO LINK - https://youtu.be/VUwzcTpcKew
+2) Postman Documentations Admin - https://documenter.getpostman.com/view/39216723/2sBXVbJuPe
+3) Postman Documentation of Hospital - https://documenter.getpostman.com/view/39215245/2sBXVbJuTv
