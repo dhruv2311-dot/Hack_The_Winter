@@ -28,6 +28,14 @@ import NgoSlots from "./pages/ngo/SlotManagement";
 import NgoDonors from "./pages/ngo/DonorRegistry";
 import NgoConnectivity from "./pages/ngo/ConnectivityGrid";
 import ProtectedRoute from "./components/ProtectedRoute";
+import SuperAdminLayout from "./layouts/SuperAdminLayout";
+import SuperAdminDashboard from "./pages/superadmin/Dashboard";
+import HospitalManagement from "./pages/superadmin/HospitalManagement";
+import NGOManagement from "./pages/superadmin/NGOManagement";
+import BloodBankManagement from "./pages/superadmin/BloodBankManagement";
+import BloodStockManagement from "./pages/superadmin/BloodStockManagement";
+import ApprovalsManagement from "./pages/superadmin/ApprovalsManagement";
+import AdminSettings from "./pages/superadmin/Settings";
 
 export default function App() {
   return (
@@ -118,17 +126,33 @@ export default function App() {
           <Route path="connectivity" element={<NgoConnectivity />} />
         </Route>
 
-        {/* Superadmin Dashboard - Placeholder */}
+        {/* Superadmin Dashboard - Protected Routes */}
+        <Route
+          path="/superadmin"
+          element={
+            <ProtectedRoute allowedRoles={["SUPERADMIN", "ADMIN", "superadmin", "admin"]}>
+              <SuperAdminLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<Navigate to="/superadmin/dashboard" replace />} />
+          <Route path="dashboard" element={<SuperAdminDashboard />} />
+          <Route path="hospitals" element={<HospitalManagement />} />
+          <Route path="ngos" element={<NGOManagement />} />
+          <Route path="blood-banks" element={<BloodBankManagement />} />
+          <Route path="blood-stock" element={<BloodStockManagement />} />
+          <Route path="approvals" element={<ApprovalsManagement />} />
+          <Route path="settings" element={<AdminSettings />} />
+        </Route>
+
+        {/* Fallback for superadmin login redirect */}
         <Route
           path="/superadmin/dashboard"
           element={
-            <ProtectedRoute allowedRoles={["SUPERADMIN"]}>
-              <div className="min-h-screen flex items-center justify-center bg-gray-100">
-                <div className="text-center">
-                  <h1 className="text-3xl font-bold text-gray-800 mb-4">Superadmin Dashboard</h1>
-                  <p className="text-gray-600">Coming soon...</p>
-                </div>
-              </div>
+            <ProtectedRoute allowedRoles={["SUPERADMIN", "ADMIN", "superadmin", "admin"]}>
+              <SuperAdminLayout>
+                <SuperAdminDashboard />
+              </SuperAdminLayout>
             </ProtectedRoute>
           }
         />
