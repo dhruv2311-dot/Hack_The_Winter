@@ -43,20 +43,28 @@ export default function Dashboard() {
     try {
       setLoading(true);
       // Try to fetch from backend API
-      try {
-        const response = await adminService.getDashboardOverview();
-        if (response && response.data) {
-          setData(response.data);
+      const response = await adminService.getDashboardOverview();
+      
+      console.log('Dashboard API Response:', response);
+      
+      if (response && response.data) {
+        // Handle nested data structure from API
+        const dashboardData = response.data.data || response.data;
+        console.log('Dashboard Data:', dashboardData);
+        
+        if (dashboardData && dashboardData.organizations) {
+          setData(dashboardData);
+          toast.success('Dashboard data loaded successfully');
           return;
         }
-      } catch (apiError) {
-        console.log('API not ready, using mock data');
       }
       
       // Fallback to mock data
+      console.log('No valid data received, using mock data');
       setMockData();
     } catch (error) {
       console.error('Error fetching dashboard:', error);
+      toast.error('Failed to fetch dashboard data, using mock data');
       setMockData();
     } finally {
       setLoading(false);
