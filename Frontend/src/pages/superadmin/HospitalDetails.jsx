@@ -10,6 +10,9 @@ export default function HospitalDetails() {
   const [hospital, setHospital] = useState(null);
   const [loading, setLoading] = useState(true);
   const [approving, setApproving] = useState(false);
+  const [reasonModal, setReasonModal] = useState(false);
+  const [reasonText, setReasonText] = useState('');
+  const [actionType, setActionType] = useState(null); // 'activate' or 'deactivate'
 
   useEffect(() => {
     fetchHospitalDetails();
@@ -27,7 +30,7 @@ export default function HospitalDetails() {
     } catch (error) {
       toast.error('Failed to fetch hospital details');
       console.error(error);
-      navigate('/admin/hospitals');
+      navigate('/superadmin/hospitals');
     } finally {
       setLoading(false);
     }
@@ -62,9 +65,12 @@ export default function HospitalDetails() {
   const handleActivate = async () => {
     try {
       setApproving(true);
-      await hospitalService.activateHospital(id);
+      await hospitalService.activateHospital(id, reasonText);
       toast.success('Hospital activated successfully');
       setHospital(prev => ({ ...prev, isActive: true }));
+      setReasonModal(false);
+      setReasonText('');
+      setActionType(null);
       fetchHospitalDetails();
     } catch (error) {
       toast.error('Failed to activate hospital');
@@ -76,14 +82,35 @@ export default function HospitalDetails() {
   const handleDeactivate = async () => {
     try {
       setApproving(true);
-      await hospitalService.deactivateHospital(id);
+      await hospitalService.deactivateHospital(id, reasonText);
       toast.success('Hospital deactivated successfully');
       setHospital(prev => ({ ...prev, isActive: false }));
+      setReasonModal(false);
+      setReasonText('');
+      setActionType(null);
       fetchHospitalDetails();
     } catch (error) {
       toast.error('Failed to deactivate hospital');
     } finally {
       setApproving(false);
+    }
+  };
+
+  const openReasonModal = (type) => {
+    setActionType(type);
+    setReasonText('');
+    setReasonModal(true);
+  };
+
+  const handleReasonSubmit = () => {
+    if (!reasonText.trim()) {
+      toast.error('Please enter a reason');
+      return;
+    }
+    if (actionType === 'activate') {
+      handleActivate();
+    } else if (actionType === 'deactivate') {
+      handleDeactivate();
     }
   };
 
@@ -120,7 +147,7 @@ export default function HospitalDetails() {
       {/* Header */}
       <div className="flex items-center gap-4 mb-6">
         <button
-          onClick={() => navigate('/admin/hospitals')}
+          onClick={() => navigate('/superadmin/hospitals')}
           className="text-gray-600 hover:text-gray-900 transition"
         >
           <ArrowLeft size={24} />
@@ -163,15 +190,19 @@ export default function HospitalDetails() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
                 <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Address</p>
-                <p className="text-sm font-medium text-gray-900">{hospital.address}</p>
+                <p className="text-sm font-medium text-gray-900">{hospital.location?.address || hospital.address || 'N/A'}</p>
               </div>
               <div>
                 <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">City</p>
-                <p className="text-sm font-medium text-gray-900">{hospital.city}</p>
+                <p className="text-sm font-medium text-gray-900">{hospital.location?.city || hospital.city || 'N/A'}</p>
               </div>
               <div>
-                <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">State & Pincode</p>
-                <p className="text-sm font-medium text-gray-900">{hospital.state} - {hospital.pinCode}</p>
+                <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">State</p>
+                <p className="text-sm font-medium text-gray-900">{hospital.location?.state || hospital.state || 'N/A'}</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Pincode</p>
+                <p className="text-sm font-medium text-gray-900">{hospital.location?.pincode || hospital.pinCode || 'N/A'}</p>
               </div>
             </div>
           </div>
@@ -300,7 +331,7 @@ export default function HospitalDetails() {
                 <>
                   {hospital.isActive ? (
                     <button
-                      onClick={handleDeactivate}
+                      onClick={() => openReasonModal('deactivate')}
                       disabled={approving}
                       className="w-full bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition font-medium disabled:opacity-50"
                     >
@@ -308,7 +339,7 @@ export default function HospitalDetails() {
                     </button>
                   ) : (
                     <button
-                      onClick={handleActivate}
+                      onClick={() => openReasonModal('activate')}
                       disabled={approving}
                       className="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition font-medium disabled:opacity-50"
                     >
@@ -319,7 +350,7 @@ export default function HospitalDetails() {
               )}
 
               <button
-                onClick={() => navigate('/admin/hospitals')}
+                onClick={() => navigate('/superadmin/hospitals')}
                 className="w-full bg-gray-300 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-400 transition font-medium"
               >
                 Back to List
@@ -328,6 +359,56 @@ export default function HospitalDetails() {
           </div>
         </div>
       </div>
+
+      {/* Reason Modal */}
+      {reasonModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              {actionType === 'activate' ? 'Activate Hospital' : 'Deactivate Hospital'}
+            </h3>
+            
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                {actionType === 'activate' 
+                  ? 'Why are you activating this hospital?' 
+                  : 'Why are you deactivating this hospital?'}
+              </label>
+              <textarea
+                value={reasonText}
+                onChange={(e) => setReasonText(e.target.value)}
+                placeholder="Enter reason..."
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 resize-none"
+                rows={4}
+              />
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setReasonModal(false);
+                  setReasonText('');
+                  setActionType(null);
+                }}
+                className="flex-1 bg-gray-300 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-400 transition font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleReasonSubmit}
+                disabled={approving || !reasonText.trim()}
+                className={`flex-1 text-white px-4 py-2 rounded-lg transition font-medium disabled:opacity-50 ${
+                  actionType === 'activate'
+                    ? 'bg-green-600 hover:bg-green-700'
+                    : 'bg-orange-600 hover:bg-orange-700'
+                }`}
+              >
+                {actionType === 'activate' ? 'Activate' : 'Deactivate'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

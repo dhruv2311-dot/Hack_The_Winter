@@ -188,6 +188,7 @@ export const getHospitalsByStatus = async (req, res) => {
 export const activateHospital = async (req, res) => {
   try {
     const { id } = req.params;
+    const { reason = 'Activated by admin' } = req.body;
 
     if (!id) {
       return res.status(400).json({
@@ -204,7 +205,11 @@ export const activateHospital = async (req, res) => {
       });
     }
 
-    const updated = await Hospital.updateStatus(id, "APPROVED");
+    const updated = await Hospital.updateById(id, {
+      status: "APPROVED",
+      activationReason: reason,
+      activatedAt: new Date()
+    });
 
     if (!updated) {
       return res.status(500).json({

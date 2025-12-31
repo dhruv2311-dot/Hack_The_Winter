@@ -39,9 +39,9 @@ export const hospitalService = {
   
   getHospitalByCode: (code) => adminAPI.get(`/admin/hospitals/code/${code}`),
   
-  activateHospital: (id) => adminAPI.post(`/admin/hospitals/${id}/activate`),
+  activateHospital: (id, reason = '') => adminAPI.post(`/admin/hospitals/${id}/activate`, { reason }),
   
-  deactivateHospital: (id) => adminAPI.post(`/admin/hospitals/${id}/suspend`, { reason: 'Deactivated by admin' }),
+  deactivateHospital: (id, reason = '') => adminAPI.post(`/admin/hospitals/${id}/suspend`, { reason: reason || 'Deactivated by admin' }),
   
   approveHospital: (id) => {
     // Get hospital details first to get organizationCode

@@ -48,7 +48,7 @@ export default function Dashboard() {
     try {
       setLoading(true);
       
-      // Fetch all dashboard data in parallel
+      // Fetch all dashboard datgita in parallel
       const [overviewRes, growthRes, bloodTypesRes, usersRes, activityRes] = await Promise.all([
         adminService.getDashboardOverview(),
         adminService.getGrowthTrends(),

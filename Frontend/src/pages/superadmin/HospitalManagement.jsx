@@ -243,23 +243,6 @@ export default function HospitalManagement() {
                         >
                           <Eye size={18} />
                         </button>
-                        {hospital.isActive ? (
-                          <button
-                            onClick={() => handleDeactivate(hospital._id)}
-                            className="text-red-600 hover:text-red-800 transition"
-                            title="Deactivate"
-                          >
-                            <X size={18} />
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => handleActivate(hospital._id)}
-                            className="text-green-600 hover:text-green-800 transition"
-                            title="Activate"
-                          >
-                            <Check size={18} />
-                          </button>
-                        )}
                       </div>
                     </td>
                   </tr>
