@@ -1,617 +1,253 @@
-# BloodLink - Blood Donation Management System
+# Smart Emergency Blood Network (SEBN)
 
-A comprehensive blood donation management platform with NGO camp management, donor registration, hospital blood requests, and administrative controls.
+A governed digital network that connects hospitals, blood banks, and NGOs to enable fast, reliable, and auditable blood access during emergency and critical conditions.
 
-## 📋 Table of Contents
-- [Project Structure](#project-structure)
-- [Recent Features](#recent-features)
-- [Installation & Setup](#installation--setup)
-- [API Endpoints](#api-endpoints)
-- [Database Schema](#database-schema)
-- [File Changes & Updates](#file-changes--updates)
+## Problem Statement
 
----
+During medical emergencies and rare blood group requirements, hospitals often struggle to locate blood in time. The current process relies heavily on manual phone calls, fragmented information, and informal coordination between hospitals, blood banks, and donor groups. This results in delays, uncertainty, and inefficiency during critical situations.
 
-## 🏗️ Project Structure
+There is no unified, verified, and near real-time system that allows hospitals to discover available blood or eligible donors quickly and reliably.
 
-```
-BloodLink/
-├── Backend/
-│   ├── app.js                          (Main Express server)
-│   ├── server.js                       (Server entry point)
-│   ├── package.json
-│   ├── config/
-│   │   └── db.js                       (MongoDB connection)
-│   ├── controllers/
-│   │   ├── admin/                      (Admin controllers)
-│   │   ├── Auth/
-│   │   ├── Donor/
-│   │   │   └── DonorController.js      (Donor registration logic)
-│   │   ├── NGO/
-│   │   │   └── NgoController.js        (Camp & slot management)
-│   │   └── organization/
-│   ├── models/
-│   │   ├── admin/
-│   │   ├── donor/
-│   │   │   ├── Donor.js
-│   │   │   └── Donation.js
-│   │   ├── ngo/
-│   │   │   ├── NgoCamp.js              (Camp model)
-│   │   │   ├── CampSlot.js             (Time slot model)
-│   │   │   ├── CampRegistration.js     (Registration tracking)
-│   │   │   ├── NgoCamp.js
-│   │   │   └── User.js
-│   │   └── organization/
-│   ├── routes/
-│   │   ├── admin/
-│   │   ├── auth/
-│   │   ├── donor/
-│   │   │   └── DonorRoutes.js
-│   │   ├── ngo/
-│   │   │   └── NgoRoutes.js            (Camp & slot routes)
-│   │   └── organization/
-│   ├── middleware/
-│   │   ├── auth.middleware.js
-│   │   ├── adminAuth.middleware.js
-│   │   ├── organizationAuth.middleware.js
-│   │   ├── role.middleware.js
-│   │   └── rateLimiter.js
-│   └── utils/
-│       ├── responseHandler.js
-│       ├── validators.js
-│       ├── codeGenerator.js
-│       └── constants.js
-│
-├── Frontend/
-│   ├── index.html
-│   ├── package.json
-│   ├── vite.config.js
-│   ├── eslint.config.js
-│   ├── src/
-│   │   ├── App.jsx
-│   │   ├── main.jsx
-│   │   ├── index.css
-│   │   ├── components/
-│   │   ├── context/
-│   │   │   └── AuthContext.jsx
-│   │   ├── layouts/
-│   │   ├── pages/
-│   │   │   └── DonorRegistration.jsx   (Camp & slot selection UI)
-│   │   └── services/
-│   ├── public/
-│   └── assets/
-│
-└── README.md                           (This file)
+### Limitations of Existing Systems
+
+- Manual calling of multiple blood banks
+- Limited or fragmented visibility of blood stock
+- Poor coordination between hospitals, blood banks, and NGOs
+- Lack of verified and governed access
+- No structured fallback when blood is unavailable nearby
+- Minimal auditability and accountability
+
+## Core Idea
+
+SEBN introduces a centrally governed emergency blood network where verified hospitals, blood banks, and NGOs operate on a single platform.
+
+SEBN is designed as a decision-support and coordination system, not as a replacement for existing blood bank operations.
+
+### System Workflow
+
+1. **Hospital raises a blood requirement request** - Digitally submit emergency needs
+2. **System searches nearby blood banks** - Using real-time stock data
+3. **Search radius expands progressively** - If blood is unavailable
+4. **NGOs are triggered as fallback** - To identify eligible donors
+5. **Hospital receives confirmed availability** - With complete details
+6. **Admin monitors and audits** - The complete request lifecycle
+
+#### Emergency Request Processing Flow
+
+```mermaid
+flowchart TD
+    H["🏥 Hospital<br/>Raises Request"]
+    S["🔍 Search Nearby<br/>Blood Banks"]
+    F1{"✓ Blood<br/>Found?"}
+    R["📊 Return Results<br/>to Hospital"]
+    E["📍 Expand Search<br/>Radius"]
+    F2{"✓ Still Not<br/>Found?"}
+    N["🤝 Contact NGO<br/>Donor Network"]
+    F3{"✓ Donors<br/>Available?"}
+    E2["❌ No Options<br/>Escalate Alert"]
+    L["📋 Log to<br/>Audit Trail"]
+    
+    H --> S
+    S --> F1
+    F1 -->|YES| R
+    F1 -->|NO| E
+    E --> F2
+    F2 -->|YES| R
+    F2 -->|NO| N
+    N --> F3
+    F3 -->|YES| R
+    F3 -->|NO| E2
+    
+    R --> L
+    E2 --> L
+    
+    style H fill:#ff9800,stroke:#e65100,stroke-width:2px,color:#fff
+    style S fill:#1976d2,stroke:#0d47a1,stroke-width:2px,color:#fff
+    style F1 fill:#f57f17,stroke:#e65100,stroke-width:2px,color:#fff
+    style F2 fill:#f57f17,stroke:#e65100,stroke-width:2px,color:#fff
+    style F3 fill:#f57f17,stroke:#e65100,stroke-width:2px,color:#fff
+    style E fill:#d32f2f,stroke:#b71c1c,stroke-width:2px,color:#fff
+    style E2 fill:#c62828,stroke:#b71c1c,stroke-width:2px,color:#fff
+    style N fill:#7b1fa2,stroke:#4a148c,stroke-width:2px,color:#fff
+    style R fill:#388e3c,stroke:#1b5e20,stroke-width:2px,color:#fff
+    style L fill:#455a64,stroke:#263238,stroke-width:2px,color:#fff
 ```
 
----
+(Detailed flows and DFDs are documented separately.)
 
-## ✨ Recent Features Implemented
+## Key Differentiators (USP)
 
-### 1️⃣ Blood Donation Camp Selection
-**Status**: ✅ Complete & Working
+### Problem vs Solution Visualization
 
-**What's New:**
-- Donors can now select from available blood donation camps during registration
-- Shows camp name, location, and date
-- Real-time camp data from database
-- Public API endpoint (no authentication required)
-
-**Implementation:**
-- Backend Endpoint: `GET /api/public/camps`
-- Frontend Component: DonorRegistration.jsx (Camp Selection Dropdown)
-- Database Collection: `ngoCamps`
-
-**Files Modified:**
-- `Backend/app.js` - Added public camps endpoint
-- `Frontend/src/pages/DonorRegistration.jsx` - Added camp dropdown UI
-
----
-
-### 2️⃣ Dynamic Time Slot Management (NEW!)
-**Status**: ✅ Complete & Working
-
-**What's New:**
-- Time slots automatically load based on selected camp
-- Shows available spots for each slot
-- Dynamic availability checking
-- Slots disable when full
-- Loading states & error handling
-
-**Implementation:**
-- Backend Endpoint: `GET /api/public/camps/:campId/slots`
-- Database Collection: `campSlots`
-- Frontend Logic: useEffect hook with camp dependency
-
-**Features:**
-- ✅ 7 pre-configured time slots (6 AM - 8 PM)
-- ✅ Configurable max donors per slot
-- ✅ Real-time availability display
-- ✅ Disabled slots when full
-- ✅ Loading & error states
-
-**Files Modified:**
-- `Backend/app.js` - Added public slots endpoint + test endpoint
-- `Frontend/src/pages/DonorRegistration.jsx` - Added slot selection UI
-
----
-
-## 🚀 Installation & Setup
-
-### Prerequisites
-- Node.js (v16+)
-- MongoDB (Local or Atlas)
-- npm or yarn
-
-### Backend Setup
-
-```bash
-cd Backend
-
-# Install dependencies
-npm install
-
-# Create .env file with:
-MONGO_URI=mongodb://localhost:27017/bloodlink
-CORS_ORIGIN=http://localhost:5173
-PORT=5000
-
-# Start server
-npm start
+```mermaid
+%%{init: {'flowchart': {'curve': 'linear', 'nodeSpacing': 150, 'rankSpacing': 220, 'padding': '30'}, 'fontSize': 28, 'fontFamily': 'Arial', 'primaryTextColor':'#000', 'primaryBorderColor':'#000', 'lineColor':'#000', 'secondBkgColor':'#f0f0f0', 'tertiaryTextColor':'#000'}}%%
+graph LR
+    subgraph Problem["<b style='font-size:32px'>CURRENT STATE<br/>(Manual Process)</b>"]
+        P1["<b style='font-size:26px'>📞 Multiple<br/>Phone Calls</b>"]
+        P2["<b style='font-size:26px'>📊 Fragmented<br/>Data</b>"]
+        P3["<b style='font-size:26px'>❌ No Escalation<br/>Logic</b>"]
+        P4["<b style='font-size:26px'>👥 Manual<br/>Coordination</b>"]
+    end
+    
+    subgraph Solution["<b style='font-size:32px'>SEBN<br/>SOLUTION</b>"]
+        S1["<b style='font-size:26px'>🌐 Single Digital<br/>Portal</b>"]
+        S2["<b style='font-size:26px'>📈 Real-time Stock<br/>Visibility</b>"]
+        S3["<b style='font-size:26px'>⚡ Automatic<br/>Escalation</b>"]
+        S4["<b style='font-size:26px'>✅ Governed<br/>Coordination</b>"]
+    end
+    
+    Problem -.->|<b style='font-size:24px'>Transform</b>| Solution
+    
+    style Problem fill:#c62828,stroke:#b71c1c,stroke-width:3px,color:#fff
+    style Solution fill:#ff9800,stroke:#1b5e20,stroke-width:3px,color:#fff
+    style P1 fill:#ef5350,stroke:#d32f2f,stroke-width:2px,color:#fff
+    style P2 fill:#ef5350,stroke:#d32f2f,stroke-width:2px,color:#fff
+    style P3 fill:#ef5350,stroke:#d32f2f,stroke-width:2px,color:#fff
+    style P4 fill:#ef5350,stroke:#d32f2f,stroke-width:2px,color:#fff
+    style S1 fill:#66bb6a,stroke:#2e7d32,stroke-width:2px,color:#fff
+    style S2 fill:#66bb6a,stroke:#2e7d32,stroke-width:2px,color:#fff
+    style S3 fill:#66bb6a,stroke:#2e7d32,stroke-width:2px,color:#fff
+    style S4 fill:#2e7d32,stroke:#1b5e20,stroke-width:2px,color:#fff
 ```
 
-Server runs on: `http://localhost:5000`
+**Key Differentiators (USP)**:
 
-### Frontend Setup
+-  Real-time blood stock visibility across verified blood banks
+-  Single portal for blood bank discovery and donor identification
+-  Progressive radius-based emergency search
+-  NGO-backed donor fallback mechanism for rare or unavailable blood
+-  Admin-governed trust model (verification, rules, audit logs)
+-  Emergency-first system design, not a generic inventory app
 
-```bash
-cd Frontend
+## Stakeholders & Roles
 
-# Install dependencies
-npm install
+### Stakeholder Interaction Model
 
-# Start development server
-npm run dev
+```mermaid
+graph TB
+    Admin["👨‍💼 Super Admin<br/>Platform Control"]
+    Hospital["🏥 Hospital<br/>Emergency Requests"]
+    BloodBank["🩸 Blood Bank<br/>Stock Provider"]
+    NGO["🤝 NGO<br/>Donor Network"]
+    
+    Admin -->|Approves| Hospital
+    Admin -->|Approves| BloodBank
+    Admin -->|Approves| NGO
+    Admin -->|Monitors| Hospital
+    Admin -->|Monitors| BloodBank
+    Admin -->|Monitors| NGO
+    
+    Hospital -->|Searches| BloodBank
+    Hospital -->|Escalates to| NGO
+    
+    BloodBank -->|Updates Stock| BloodBank
+    NGO -->|Organizes Camps| NGO
+    
+    style Admin fill:#c62828,stroke:#b71c1c,stroke-width:2px,color:#fff
+    style Hospital fill:#e65100,stroke:#bf360c,stroke-width:2px,color:#fff
+    style BloodBank fill:#0d47a1,stroke:#051c7c,stroke-width:2px,color:#fff
+    style NGO fill:#4a148c,stroke:#38006b,stroke-width:2px,color:#fff
 ```
 
-Frontend runs on: `http://localhost:5173`
+### Hospitals
+- Raise blood emergency requests
+- View available blood and donor options
+- Do not manually contact blood banks
 
----
+### Blood Banks
+- Maintain and update blood stock regularly
+- Act as the primary blood source
+- Operate only after admin verification
 
-## 📊 API Endpoints
+### NGOs
+- Organize blood donation camps
+- Maintain active donor data
+- Act as fallback donor providers during shortages
 
-### Public Endpoints (No Authentication)
+### Admin
+- Verify hospitals, blood banks, and NGOs
+- Define system rules and escalation logic
+- Monitor activity and maintain audit logs
+- Ensure data reliability and system integrity
 
-#### 1. Get All Available Camps
-```
-GET /api/public/camps
-```
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Found 3 camps",
-  "camps": [
-    {
-      "_id": "60d5ec49f1b2c72b1c8e4a1a",
-      "campName": "Red Cross Blood Camp - Delhi",
-      "location": "Central Hospital, New Delhi",
-      "city": "New Delhi",
-      "startDate": "2025-01-10",
-      "endDate": "2025-01-20"
-    }
-  ]
-}
-```
+## Technology Stack
 
-#### 2. Get Time Slots for a Camp
-```
-GET /api/public/camps/:campId/slots
-```
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Found 7 slots",
-  "slots": [
-    {
-      "_id": "60d5ec49f1b2c72b1c8e4a2b",
-      "slotTime": "06:00 AM - 08:00 AM",
-      "maxDonors": 10,
-      "bookedCount": 2,
-      "availableSpots": 8
-    }
-  ]
-}
-```
+### System Architecture Overview
 
-### Donor Endpoints (User Only)
-
-#### 3. Register Donor
-```
-POST /api/donor/register
-```
-**Headers:**
-```
-Content-Type: application/json
-```
-**Request Body:**
-```json
-{
-  "name": "John Doe",
-  "age": 28,
-  "gender": "Male",
-  "bloodGroup": "O+",
-  "mobileNumber": "9876543210",
-  "city": "Delhi",
-  "address": "123 Main St",
-  "email": "john@example.com",
-  "donationDate": "2025-02-01",
-  "donationTime": "09:00 AM - 10:00 AM",
-  "campId": "60d5ec49f1b2c72b1c8e4a1a",
-  "slotId": "60d5ec49f1b2c72b1c8e4a2b",
-  "campName": "Red Cross Blood Camp",
-  "campLocation": "Central Hospital"
-}
+```mermaid
+graph TB
+    subgraph Frontend["🎨 FRONTEND LAYER"]
+        React["React SPA<br/>Mobile-First UI"]
+        RoleUI["Role-Based<br/>Dashboards"]
+    end
+    
+    subgraph Backend["⚙️ BACKEND LAYER"]
+        API["Node.js Express<br/>REST API"]
+        Auth["Authentication &<br/>Authorization"]
+        Logic["Business Logic<br/>& Rules"]
+    end
+    
+    subgraph Database["💾 DATA LAYER"]
+        Mongo["MongoDB<br/>Centralized DB"]
+    end
+    
+    React --> API
+    RoleUI --> API
+    API --> Auth
+    API --> Logic
+    Auth --> Mongo
+    Logic --> Mongo
+    
+    style Frontend fill:#1565c0,stroke:#0d47a1,stroke-width:2px,color:#fff
+    style Backend fill:#6a1b9a,stroke:#4a148c,stroke-width:2px,color:#fff
+    style Database fill:#00796b,stroke:#004d40,stroke-width:2px,color:#fff
+    style React fill:#1976d2,stroke:#0d47a1,stroke-width:2px,color:#fff
+    style API fill:#7c4dff,stroke:#512da8,stroke-width:2px,color:#fff
+    style Mongo fill:#388e3c,stroke:#1b5e20,stroke-width:2px,color:#fff
 ```
 
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Donor registered successfully",
-  "donorId": "60d5ec49f1b2c72b1c8e4a3c"
-}
-```
+**Technology Stack:**
 
-### NGO/Admin Endpoints (Protected)
+### Frontend
+- React (mobile-first design)
 
-#### 4. Create Camp (ADMIN only)
-```
-POST /api/ngo/camp
-Authentication: Required (Bearer Token)
-```
+### Backend
+- Node.js
+- Express.js
 
-#### 5. Get Camp Slots
-```
-GET /api/ngo/camp/:campId/slots
-Authentication: Required (Bearer Token)
-```
+### Database
+- MongoDB (native driver)
 
-#### 6. Create Time Slot
-```
-POST /api/ngo/slot
-Authentication: Required (Bearer Token)
-```
+## Core Concepts
 
-### Test Endpoints (For Development)
+- Role-based access control
+- Location-based search
+- Rule-driven emergency handling
+- Audit-oriented system design
 
-#### 7. Create Sample Camps
-```
-POST /api/test/create-sample-camps
-```
-**Creates 3 sample camps for testing**
+## Documentation Structure
 
-#### 8. Create Sample Time Slots
-```
-POST /api/test/create-sample-slots
-```
-**Creates 7 time slots for each existing camp**
+This repository includes multiple focused documentation files. **Click on any file below to view its contents:**
 
----
+- [📊 **SYSTEM_FLOW.md**](Main%20Documentation%202/SYSTEM_FLOW.md) – Detailed flow charts and DFDs
+- [🏗️ **ARCHITECTURE.md**](Main%20Documentation%202/ARCHITECTURE.md) – Backend architecture and module design
+- [🗄️ **DATA_MODEL.md**](Main%20Documentation%202/DATA_MODEL.md) – Database schemas and relationships
+- [🚀 **ROUND2_ROADMAP.md**](Main%20Documentation%202/ROUND2_ROADMAP.md) – Planned improvements and feature expansion
+- [📈 **COMPETITIVE_ANALYSIS.md**](Main%20Documentation%202/COMPETITIVE_ANALYSIS.md) – Positioning against existing platforms
 
-## 🗄️ Database Schema
+## Current Status (Round 1)
 
-### Collections Overview
+- System design finalized
+- Stakeholder roles clearly defined
+- Emergency handling logic documented
+- Governance and admin control model established
 
-#### ngoCamps Collection
-```javascript
-{
-  _id: ObjectId,
-  campName: String,              // e.g., "Red Cross Blood Camp"
-  location: String,              // e.g., "Central Hospital, Delhi"
-  city: String,                  // e.g., "Delhi"
-  state: String,                 // e.g., "Delhi"
-  pincode: String,               // e.g., "110001"
-  description: String,           // Optional camp description
-  contactPersonName: String,     // Contact person name
-  contactMobile: String,         // Contact mobile number
-  startDate: Date,               // Camp start date
-  endDate: Date,                 // Camp end date
-  status: String,                // "pending" | "approved" | "active" | "completed" | "cancelled"
-  isActive: Boolean,             // Default: true
-  expectedDonors: Number,        // Expected donors count
-  totalSlots: Number,            // Number of time slots
-  createdAt: Date,
-  updatedAt: Date
-}
-```
+Round 1 focuses on validating the system design, workflows, and technical feasibility.
 
-#### campSlots Collection
-```javascript
-{
-  _id: ObjectId,
-  campId: ObjectId,              // Reference to ngoCamps._id
-  slotTime: String,              // e.g., "09:00 AM - 10:00 AM"
-  maxDonors: Number,             // Max capacity (default: 10)
-  bookedCount: Number,           // Currently booked donors (default: 0)
-  availableSpots: Number,        // maxDonors - bookedCount (calculated)
-  createdAt: Date,
-  updatedAt: Date
-}
-```
+## Scope Clarification
 
-#### donors Collection
-```javascript
-{
-  _id: ObjectId,
-  name: String,
-  age: Number,
-  gender: String,
-  bloodGroup: String,            // "O+" | "O-" | "A+" | "A-" | "B+" | "B-" | "AB+" | "AB-"
-  mobileNumber: String,          // 10 digits
-  city: String,
-  address: String,
-  email: String,                 // Optional
-  donationDate: Date,
-  donationTime: String,
-  nextDonationDate: Date,        // 90 days after donation
-  campId: ObjectId,              // Reference to ngoCamps
-  slotId: ObjectId,              // Reference to campSlots
-  campName: String,
-  campLocation: String,
-  status: String,                // "registered" | "completed" | "cancelled"
-  createdAt: Date,
-  updatedAt: Date
-}
-```
+SEBN currently focuses exclusively on blood emergency management. The architecture is intentionally designed to support future expansion to other emergency resources, but such extensions are planned for later stages.
 
----
+## Conclusion
 
-## 📝 File Changes & Updates
-
-### Backend Files Modified
-
-#### 1. `Backend/app.js`
-**Lines Changed:** ~100 additions
-**Changes Made:**
-- Added import for `getDB` from config
-- Added `GET /api/public/camps` endpoint
-- Added `GET /api/public/camps/:campId/slots` endpoint
-- Added `POST /api/test/create-sample-camps` endpoint
-- Added `POST /api/test/create-sample-slots` endpoint
-
-**Key Functions:**
-```javascript
-// Get all active camps
-app.get("/api/public/camps", async (req, res) => {
-  // Queries ngoCamps where isActive=true
-  // Returns formatted camp data
-})
-
-// Get slots for a specific camp
-app.get("/api/public/camps/:campId/slots", async (req, res) => {
-  // Queries campSlots by campId
-  // Returns slots with available spots
-})
-
-// Create sample camps (test)
-app.post("/api/test/create-sample-camps", async (req, res) => {
-  // Creates 3 pre-configured camps
-})
-
-// Create sample slots (test)
-app.post("/api/test/create-sample-slots", async (req, res) => {
-  // Creates 7 slots for each camp
-})
-```
-
-#### 2. `Backend/models/ngo/NgoCamp.js`
-**Status:** ✅ No changes needed
-**Usage:** Camp schema for database operations
-
-#### 3. `Backend/models/ngo/CampSlot.js`
-**Status:** ✅ No changes needed
-**Usage:** Time slot schema with camp reference
-
----
-
-### Frontend Files Modified
-
-#### 1. `Frontend/src/pages/DonorRegistration.jsx`
-**Lines Changed:** ~150 modifications
-**Changes Made:**
-
-**State Variables Added:**
-```javascript
-const [slotsLoading, setSlotsLoading] = useState(false);
-const [slots, setSlots] = useState([]);
-const [selectedSlot, setSelectedSlot] = useState(null);
-```
-
-**FormData Updated:**
-```javascript
-donationTime: "",    // Now from slot instead of hardcoded
-campId: "",
-slotId: "",         // NEW: stores selected slot ID
-```
-
-**Hooks Added:**
-```javascript
-// Fetch slots when camp selected
-useEffect(() => {
-  if (!selectedCamp) return;
-  
-  // Calls: GET /api/public/camps/{campId}/slots
-  // Updates slots state
-}, [selectedCamp])
-```
-
-**New Handler Function:**
-```javascript
-const handleSlotSelection = (slot) => {
-  setSelectedSlot(slot);
-  setFormData(prev => ({
-    ...prev,
-    slotId: slot._id.toString()
-  }));
-}
-```
-
-**UI Components Added:**
-```jsx
-// Time slot selector with:
-- Loading state
-- No camp selected message
-- No slots available message
-- Available spots display
-- Disabled slots when full
-- Green confirmation when selected
-```
-
-**Form Validation Updated:**
-- Now requires: `selectedCamp && selectedSlot`
-- Error message: "Please fill in all required fields including camp and time slot selection"
-
-**Submit Payload Modified:**
-```javascript
-{
-  // ... other fields
-  donationTime: selectedSlot.slotTime,  // From slot instead of form
-  campId: formData.campId,
-  slotId: formData.slotId,              // NEW
-  // ... rest
-}
-```
-
----
-
-## 🧪 Testing Instructions
-
-### Quick Test Setup (3 commands)
-
-```bash
-# 1. Create sample camps
-curl -X POST http://localhost:5000/api/test/create-sample-camps
-
-# 2. Create sample time slots
-curl -X POST http://localhost:5000/api/test/create-sample-slots
-
-# 3. Restart backend (if needed)
-cd Backend && npm start
-```
-
-### Manual Testing in Frontend
-
-1. **Navigate to Registration Page**
-   - URL: `http://localhost:5173/donor-registration`
-
-2. **Fill Basic Information**
-   - Name, Age, Gender, Blood Group
-   - Mobile Number, City
-   - Address (optional), Email (optional)
-
-3. **Select Camp**
-   - Open "Select Blood Donation Camp" dropdown
-   - Should show 3 camps (or your custom camps)
-   - Click to select
-
-4. **Verify Slots Load**
-   - Time slot dropdown should become active
-   - Should show 7 slots with available spots
-   - Example: "06:00 AM - 08:00 AM (8 spots available)"
-
-5. **Select Time Slot**
-   - Choose any available slot
-   - Green confirmation appears
-
-6. **Complete Registration**
-   - Fill donation date
-   - Submit form
-   - Should see success message
-
----
-
-## 🔧 Troubleshooting
-
-| Issue | Solution |
-|-------|----------|
-| No camps showing | Run: `curl -X POST http://localhost:5000/api/test/create-sample-camps` |
-| No slots showing | Run: `curl -X POST http://localhost:5000/api/test/create-sample-slots` |
-| 404 on camps API | Ensure backend is running on port 5000 |
-| Frontend not connecting | Check CORS_ORIGIN in .env matches frontend URL |
-| Slots don't load after camp selection | Check browser console for errors, verify campId is valid |
-| Database connection issues | Verify MongoDB is running and MONGO_URI is correct |
-
----
-
-## 📋 Registration Form Flow
-
-```
-┌─────────────────────────────────────┐
-│   Fill Basic Information Form       │
-│  (Name, Age, Gender, Blood Group)   │
-└────────────┬────────────────────────┘
-             │
-             ▼
-┌─────────────────────────────────────┐
-│     Select Blood Donation Camp      │
-│   (Dropdown loads from API)         │
-└────────────┬────────────────────────┘
-             │
-             ▼
-┌─────────────────────────────────────┐
-│     Select Time Slot for Camp       │
-│  (Slots load based on selected      │
-│   camp from campSlots collection)   │
-└────────────┬────────────────────────┘
-             │
-             ▼
-┌─────────────────────────────────────┐
-│     Select Donation Date            │
-│  (Future date, not in past)         │
-└────────────┬────────────────────────┘
-             │
-             ▼
-┌─────────────────────────────────────┐
-│     Submit Registration             │
-│  (Validates all fields)             │
-└────────────┬────────────────────────┘
-             │
-             ▼
-┌─────────────────────────────────────┐
-│   Success! Saved to Database        │
-│   Redirect to Home Page             │
-└─────────────────────────────────────┘
-```
-
----
-
-## 🎯 Key Features Summary
-
-| Feature | Status | Implementation |
-|---------|--------|-----------------|
-| Camp Selection Dropdown | ✅ Complete | API + Frontend UI |
-| Dynamic Time Slots | ✅ Complete | API + Frontend UI |
-| Availability Display | ✅ Complete | Calculated in frontend |
-| Loading States | ✅ Complete | Shown during fetch |
-| Error Handling | ✅ Complete | Toast notifications |
-| Form Validation | ✅ Complete | Camp + Slot required |
-| Database Storage | ✅ Complete | MongoDB collections |
-| Test Data Endpoints | ✅ Complete | Quick testing setup |
-
----
-
-## 📞 Contact & Support
-
-For issues or questions:
-1. Check the troubleshooting section above
-2. Verify all services are running
-3. Check browser console for errors
-4. Verify database connection
-
----
-
-**Last Updated:** December 30, 2025
-**Version:** 1.0.0
-**Status:** ✅ Production Ready
+SEBN aims to replace fragmented and manual blood search processes with a trusted, automated, and scalable emergency blood network, enabling faster response times and better coordination during critical medical situations.

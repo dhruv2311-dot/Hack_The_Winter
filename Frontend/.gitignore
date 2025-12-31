@@ -17,3 +17,5 @@ dist-ssr
 .env.local
 .env.production.local
 
+README.md
+QUICK_START.md

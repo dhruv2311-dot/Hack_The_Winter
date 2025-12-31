@@ -1,3 +1,5 @@
 .env
 node_modules
 mdfile
+README.md
+RATE_LIMITING_GUIDE.md
