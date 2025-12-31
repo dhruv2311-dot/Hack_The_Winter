@@ -181,8 +181,8 @@ export default function HospitalOverview() {
       <section className="space-y-8">
         <div className="flex items-center justify-center py-20">
           <div className="text-center">
-            <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-solid border-[#8f0f1a] border-r-transparent"></div>
-            <p className="mt-4 text-sm text-[#7a4c4c]">Loading dashboard...</p>
+            <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-solid border-red-600 border-r-transparent"></div>
+            <p className="mt-4 text-sm text-gray-700 font-medium">Loading dashboard...</p>
           </div>
         </div>
       </section>
@@ -192,12 +192,12 @@ export default function HospitalOverview() {
   if (error) {
     return (
       <section className="space-y-8">
-        <div className="rounded-3xl border border-red-200 bg-red-50 p-6 text-center">
-          <p className="text-lg font-semibold text-red-800">Error Loading Dashboard</p>
-          <p className="mt-2 text-sm text-red-600">{error}</p>
+        <div className="rounded-2xl border-2 border-red-300 bg-red-50 p-6 text-center">
+          <p className="text-lg font-bold text-red-900">Error Loading Dashboard</p>
+          <p className="mt-2 text-sm text-red-700 font-medium">{error}</p>
           <button
             onClick={fetchDashboardData}
-            className="mt-4 rounded-full bg-red-600 px-6 py-2 text-sm font-semibold text-white hover:bg-red-700"
+            className="mt-4 rounded-full bg-red-600 px-6 py-2 text-sm font-semibold text-white hover:bg-red-700 shadow-lg transition"
           >
             Retry
           </button>
@@ -210,24 +210,24 @@ export default function HospitalOverview() {
     <section className="space-y-8">
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
-          <p className="text-xs uppercase tracking-[0.4em] text-[#8f0f1a]">
+          <p className="text-xs uppercase tracking-widest text-red-700 font-bold">
             Overview
           </p>
-          <h2 className="text-3xl font-semibold text-[#2f1012]">
+          <h2 className="text-3xl font-bold text-gray-900">
             {hospital ? hospital.name : 'Loading...'} {/* ← Hospital name from backend */}
           </h2>
-          <p className="text-sm text-[#7a4c4c]">
+          <p className="text-sm text-gray-600">
             Real-time picture of hospital blood activity across SEBN.
           </p>
           {hospital && (
-            <p className="mt-2 text-xs text-[#8f0f1a] font-semibold">
+            <p className="mt-2 text-xs text-red-700 font-semibold">
               Hospital Code: {hospital.hospitalCode} | Status: {hospital.verificationStatus}
             </p>
           )}
         </div>
         <button 
           onClick={() => navigate('/hospital/blood-requests', { state: { openCreateModal: true } })}
-          className="inline-flex items-center justify-center rounded-full bg-linear-to-r from-[#8f0f1a] to-[#c62832] px-6 py-3 text-sm font-semibold text-white shadow-[0_18px_45px_rgba(143,15,26,0.3)] transition hover:scale-105"
+          className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-[#8f0f1a] to-[#c62832] px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:scale-105 hover:shadow-xl"
         >
           + Create Blood Request
         </button>
@@ -237,62 +237,62 @@ export default function HospitalOverview() {
         {statCards.map((card) => (
           <article
             key={card.title}
-            className="rounded-3xl border border-white/60 bg-white/95 p-6 shadow-[0_25px_55px_rgba(143,15,26,0.12)]"
+            className="rounded-2xl border border-gray-200 bg-white p-6 shadow-lg hover:shadow-xl transition-shadow"
           >
-            <p className="text-xs uppercase tracking-[0.35em] text-[#7a4c4c]">
+            <p className="text-xs uppercase tracking-widest text-gray-600 font-semibold">
               {card.title}
             </p>
             <h3
-              className={`mt-4 bg-linear-to-r ${card.accent} bg-clip-text text-4xl font-semibold text-transparent`}
+              className={`mt-4 bg-gradient-to-r ${card.accent} bg-clip-text text-5xl font-bold text-transparent`}
             >
               {card.value}
             </h3>
-            <p className="mt-2 text-sm text-[#6b3c3c]">{card.meta}</p>
+            <p className="mt-2 text-sm text-gray-700 font-medium">{card.meta}</p>
           </article>
         ))}
       </div>
 
-      <div className="rounded-3xl border border-white/70 bg-white/95 p-6 shadow-[0_30px_60px_rgba(77,10,15,0.12)]">
+      <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-lg">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
-            <p className="text-xs uppercase tracking-[0.35em] text-[#8f0f1a]">
+            <p className="text-xs uppercase tracking-widest text-red-700 font-semibold">
               Urgent Requests
             </p>
-            <h3 className="text-2xl font-semibold text-[#2f1012]">
+            <h3 className="text-2xl font-bold text-gray-900">
               Critical Requirements
             </h3>
-            <p className="text-sm text-[#7a4c4c]">
+            <p className="text-sm text-gray-600">
               Critical units tracked until fulfillment.
             </p>
           </div>
-          <button className="rounded-full border border-[#f3c9c0] px-5 py-2 text-sm font-semibold text-[#8f0f1a] transition hover:border-[#8f0f1a]">
+          <button className="rounded-full border-2 border-red-200 bg-red-50 px-5 py-2 text-sm font-semibold text-red-700 transition hover:border-red-700 hover:bg-red-100">
             View all requests
           </button>
         </div>
 
         {urgentRequests.length === 0 ? (
           <div className="mt-5 text-center py-8">
-            <p className="text-sm text-[#7a4c4c]">No critical requests at the moment</p>
+            <p className="text-sm text-gray-600 font-medium">No critical requests at the moment</p>
           </div>
         ) : (
           <div className="mt-5 grid gap-4 lg:grid-cols-2">
             {urgentRequests.map((req) => (
               <article
                 key={req._id}
-                className="rounded-2xl border border-[#f7d5cc] bg-linear-to-br from-[#fff1ed] to-white p-5 shadow-inner"
+                className="rounded-xl border-2 border-red-200 bg-gradient-to-br from-red-50 to-white p-5 shadow-md hover:shadow-lg transition-shadow"
               >
                 <div className="flex items-center justify-between">
-                  <h4 className="text-lg font-semibold text-[#2f1012]">
+                  <h4 className="text-lg font-bold text-gray-900">
                     {req.label}
                   </h4>
-                  <span className="rounded-full border border-[#f08a8d] px-3 py-1 text-xs font-semibold text-[#8f0f1a]">
+                  <span className="rounded-full border-2 border-red-600 bg-red-100 px-3 py-1 text-xs font-bold text-red-800">
                     {req.bloodGroup}
                   </span>
                 </div>
-                <p className="mt-1 text-sm text-[#7a4c4c]">
+                <p className="mt-1 text-sm text-gray-700 font-medium">
                   {req.units} units • Requested {req.requestedAt}
                 </p>
-                <p className="mt-3 text-sm font-medium text-[#a13b44]">
+                <p className="mt-3 text-sm font-semibold text-red-700">
                   {req.status}
                 </p>
               </article>
