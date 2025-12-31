@@ -126,7 +126,7 @@ export default function SlotManagement() {
             <button
               type="submit"
               disabled={loading}
-              className="rounded-full bg-linear-to-r from-[#ff4d6d] to-[#ff7b9c] px-5 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-white disabled:opacity-50 disabled:cursor-not-allowed"
+              className="rounded-full bg-gradient-to-r from-[#ff4d6d] to-[#ff7b9c] px-5 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-white disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? "Adding..." : "Add Slot"}
             </button>
@@ -198,7 +198,7 @@ export default function SlotManagement() {
                   className={`h-full rounded-full ${
                     fillRatio === 100
                       ? "bg-[#d92140]"
-                      : "bg-linear-to-r from-[#ff4d6d] to-[#ff7b9c]"
+                      : "bg-gradient-to-r from-[#ff4d6d] to-[#ff7b9c]"
                   }`}
                   style={{ width: `${fillRatio}%` }}
                 />
