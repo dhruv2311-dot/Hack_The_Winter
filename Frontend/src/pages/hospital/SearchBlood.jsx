@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { searchBloodAvailability } from "../../services/hospitalApi";
+import { useState, useEffect } from "react";
+import { searchBloodAvailability, getHospitalById } from "../../services/hospitalApi";
+import { useAuth } from "../../context/AuthContext";
 import { toast } from "react-hot-toast";
 
 export default function SearchBlood() {
@@ -10,30 +11,76 @@ export default function SearchBlood() {
   });
   const [source, setSource] = useState('bloodbank');
   const [results, setResults] = useState([]);
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
+  const [radius, setRadius] = useState(5);
+  const [hospitalCoords, setHospitalCoords] = useState(null);
+  const [showRadiusOption, setShowRadiusOption] = useState(false);
+
+  // Fetch Hospital Coordinates on mount
+  useEffect(() => {
+    const fetchHospitalDetails = async () => {
+      if (user?.organizationId) {
+        try {
+          const response = await getHospitalById(user.organizationId);
+          if (response.data.success && response.data.data.location?.coordinates) {
+             const [long, lat] = response.data.data.location.coordinates;
+             setHospitalCoords({ latitude: lat, longitude: long });
+             console.log("📍 Hospital Location Loaded:", { lat, long });
+          }
+        } catch (error) {
+          console.error("Failed to load hospital location:", error);
+        }
+      }
+    };
+    fetchHospitalDetails();
+  }, [user]);
 
   const bloodTypes = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 
-  const handleSearch = async (e) => {
-    e.preventDefault();
+  const handleSearch = async (e, customRadius = null) => {
+    if (e) e.preventDefault();
     setLoading(true);
     setSearched(true);
+    setShowRadiusOption(false);
     
+    // Use custom radius if provided (for expansion), otherwise use state
+    const currentRadius = customRadius || radius;
+
     try {
       const response = await searchBloodAvailability(
         filters.bloodType, 
         filters.minUnits, 
-        filters.city
+        filters.city,
+        hospitalCoords?.latitude,
+        hospitalCoords?.longitude,
+        currentRadius
       );
       
       if (response.data.success) {
         setResults(response.data.data);
         setSource(response.data.source || 'bloodbank');
+        
         if (response.data.data.length === 0) {
-          toast.success("No stock matching your criteria");
+           if (response.data.source === 'donor') {
+              // If searching donors and none found, verify if we used coordinates
+              if (hospitalCoords) {
+                  setShowRadiusOption(true);
+                  toast.error(`No donors found within ${currentRadius}km.`);
+              } else {
+                  toast.error("No donors found in this city.");
+              }
+           } else {
+              toast.error("No stock found.");
+           }
         } else if (response.data.source === 'donor') {
-           toast.success(`No stock found. Found ${response.data.data.length} potential donors.`);
+           toast.success(`Found ${response.data.data.length} donors within ${currentRadius}km.`);
+           // If we found some, we can still offer to expand if the user wants more? 
+           // Prompt says "if not found the doner then give me one option... if found then donar appear"
+           // So if found, we typically don't show the button immediately, but we could.
+           // For now, only showing if length === 0 or very few? 
+           // Let's strictly follow "if not found... give option". 
         }
       }
     } catch (error) {
@@ -43,6 +90,13 @@ export default function SearchBlood() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleIncreaseRadius = () => {
+      const newRadius = radius + 5;
+      setRadius(newRadius);
+      // Trigger search immediately with new radius
+      handleSearch(null, newRadius);
   };
 
   return (
@@ -119,18 +173,35 @@ export default function SearchBlood() {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-xl font-bold text-gray-800">
-               {source === 'donor' ? 'Matching Donors' : 'Search Results'} ({results.length})
+               {source === 'donor' ? `Matching Donors (${radius}km)` : 'Search Results'} ({results.length})
             </h3>
-            {source === 'donor' && results.length > 0 && (
-               <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full font-bold border border-yellow-200">
-                 Stock unavailable - Showing Donors
-               </span>
+            {source === 'donor' && (
+               <div className="flex items-center gap-2">
+                 <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full font-bold border border-yellow-200">
+                   Searching Donors
+                 </span>
+                 {hospitalCoords && (
+                    <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-bold border border-blue-200">
+                      📍 Geospatial Search Active
+                    </span>
+                 )}
+               </div>
             )}
           </div>
 
           {results.length === 0 ? (
-            <div className="rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 p-12 text-center text-gray-500">
-               {loading ? "Scanning network..." : "No stock or donors found."}
+            <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 p-12 text-center">
+               <p className="text-gray-500 mb-4">{loading ? "Scanning network..." : "No stock or donors found."}</p>
+               
+               {/* Expand Radius Button */}
+               {showRadiusOption && !loading && (
+                  <button
+                    onClick={handleIncreaseRadius}
+                    className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-md transition-all transform hover:scale-105"
+                  >
+                    <span>🔄 Increase Search Radius (+5km)</span>
+                  </button>
+               )}
             </div>
           ) : (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
