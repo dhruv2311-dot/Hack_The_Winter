@@ -34,6 +34,8 @@ export const registerDonor = async (req, res) => {
       campName,
       campLocation,
       slotTime,
+      latitude,
+      longitude
     } = req.body;
 
     // 0️⃣ Validate required fields
@@ -55,6 +57,15 @@ export const registerDonor = async (req, res) => {
       return res.status(400).json({
         message: "Mobile number must be 10 digits"
       });
+    }
+
+    // Construct Location GeoJSON if coordinates are provided
+    let locationData = null;
+    if (latitude && longitude) {
+      locationData = {
+        type: "Point",
+        coordinates: [parseFloat(longitude), parseFloat(latitude)] // GeoJSON is [long, lat]
+      };
     }
 
     // 1️⃣ Check if donor already exists by mobile number in donors collection
@@ -87,6 +98,7 @@ export const registerDonor = async (req, res) => {
       mobileNumber,
       city,
       address: address || "",
+      location: locationData, // Save GeoJSON location
       email: email || "",
       lastDonationDate: null,
       totalDonations: 0,
@@ -104,6 +116,7 @@ export const registerDonor = async (req, res) => {
       mobileNumber,
       city,
       address: address || "",
+      location: locationData,
       email: email || "",
       donationDate: new Date(donationDate),
       donationTime,
