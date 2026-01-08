@@ -58,9 +58,9 @@ export const getNearbyHospitals = (longitude, latitude, maxDistance = 5000) =>
  * Search for blood availability
  * GET /api/hospitals/blood/search
  */
-export const searchBloodAvailability = (bloodType, minUnits = 1, city = null) =>
+export const searchBloodAvailability = (bloodType, minUnits = 1, city = null, latitude = null, longitude = null, radius = 5) =>
   axios.get(`${API_BASE}/hospitals/blood/search`, {
-    params: { bloodType, minUnits, city }
+    params: { bloodType, minUnits, city, latitude, longitude, radius }
   });
 
 /**
