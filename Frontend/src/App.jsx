@@ -23,7 +23,7 @@ import HospitalRequests from "./pages/bloodbank/HospitalRequests";
 import NgoDrives from "./pages/bloodbank/NgoDrives";
 import BloodStock from "./pages/bloodbank/BloodStock";
 import AdminMessages from "./pages/bloodbank/AdminMessages";
-import ResourceRequests from "./pages/bloodbank/ResourceRequests"; // New Page
+
 import ProfileSettings from "./pages/bloodbank/ProfileSettings";
 import HospitalLayout from "./layouts/HospitalLayout";
 import HospitalOverview from "./pages/hospital/Overview";
@@ -94,7 +94,7 @@ export default function App() {
           <Route path="ngo-drives" element={<NgoDrives />} />
           <Route path="blood-stock" element={<BloodStock />} />
           <Route path="admin-messages" element={<AdminMessages />} />
-          <Route path="resource-requests" element={<ResourceRequests />} />
+
           <Route path="profile-settings" element={<ProfileSettings />} />
         </Route>
 
