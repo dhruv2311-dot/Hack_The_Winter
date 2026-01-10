@@ -239,4 +239,23 @@ export const getRecentActivities = () => api.get("/admin/dashboard/activities");
  */
 export const getAlerts = () => api.get("/admin/alerts");
 
+/**
+ * Get alerts summary for dashboard
+ * GET /api/admin/alerts/summary
+ */
+export const getAlertSummary = () => api.get("/admin/alerts/summary");
+
+/**
+ * Get unread alert count
+ * GET /api/admin/alerts/unread/count
+ */
+export const getUnreadAlertCount = () =>
+  api.get("/admin/alerts/unread/count");
+
+/**
+ * Get blood stock shortage alerts
+ * GET /api/admin/blood-stock/shortages
+ */
+export const getShortageAlerts = () => api.get("/admin/blood-stock/shortages");
+
 export default api;
