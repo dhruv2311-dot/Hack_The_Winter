@@ -491,22 +491,96 @@ export class Organization {
    * @param {string} city - Optional city filter
    * @returns {Promise<Array>} List of organizations with stock
    */
-  static async searchBloodStock(bloodType, minUnits = 1, city = null) {
+  static async searchBloodStock(bloodType, minUnits = 1, city = null, latitude = null, longitude = null, radius = 5) {
     const db = getDB();
+    const minUnitsInt = parseInt(minUnits) || 1;
 
+    console.log(`[BLOOD_SEARCH] Searching for ${bloodType} >= ${minUnitsInt} units. Location: ${latitude}, ${longitude}`);
+
+    // ============================================
+    // CASE 1: GEOSPATIAL SEARCH (If Lat/Long provided)
+    // ============================================
+    if (latitude && longitude) {
+      try {
+        const searchRadiusMeters = (parseInt(radius) || 5) * 1000;
+
+        // Ensure Index Exists (Idempotent)
+        try {
+          await db.collection("organizations").createIndex({ location: "2dsphere" });
+        } catch (idxError) {
+          console.warn("Failed to create geospatial index on organizations:", idxError.message);
+          // If index creation fails, $geoNear will likely fail too, triggering the outer catch
+        }
+
+        const pipeline = [
+          // 1. Find nearby Blood Banks first using $geoNear (Must be first stage)
+          {
+            $geoNear: {
+              near: { type: "Point", coordinates: [parseFloat(longitude), parseFloat(latitude)] },
+              distanceField: "distance",
+              maxDistance: searchRadiusMeters,
+              query: { type: "bloodbank" }, // Only look for bloodbanks
+              spherical: true
+            }
+          },
+          // 2. Lookup their Blood Stock
+          {
+            $lookup: {
+              from: "blood_stock",
+              localField: "_id",
+              foreignField: "bloodBankId",
+              as: "stockData"
+            }
+          },
+          // 3. Unwind stock data (preserve organizations even if no stock doc exists, but we filter later)
+          { $unwind: "$stockData" },
+          // 4. Filter by Blood Availability
+          {
+            $match: {
+              [`stockData.bloodStock.${bloodType}.units`]: { $gte: minUnitsInt }
+            }
+          },
+          // 5. Project Final Shape
+          {
+            $project: {
+              _id: "$stockData._id", // Use Stock ID for frontend compatibility
+              bloodBankId: "$_id",   // Original Org ID
+              bloodStock: "$stockData.bloodStock",
+              lastStockUpdateAt: "$stockData.lastStockUpdateAt",
+              distance: 1, // Include distance from hospital
+
+              // Organization Details
+              name: "$name",
+              organizationCode: "$organizationCode",
+              type: "$type",
+              email: "$email",
+              phone: "$phone",
+              address: "$address",
+              location: "$location",
+              status: "$status"
+            }
+          },
+          // 6. Sort by distance (Nearest first)
+          { $sort: { distance: 1 } }
+        ];
+
+        const results = await db.collection("organizations").aggregate(pipeline).toArray();
+        console.log(`[BLOOD_SEARCH] Found ${results.length} results via Geospatial Search (${radius}km)`);
+        return results;
+      } catch (geoError) {
+        console.warn("Geospatial search failed (falling back to City search):", geoError.message);
+      }
+    }
+
+    // ============================================
+    // CASE 2: CITY/STRATEGY SEARCH (Legacy Fallback)
+    // ============================================
     // 1. Build query for blood_stock collection
-    // The user provided: bloodStock object inside the document, where each type has a 'units' field
     const stockQuery = {
-      [`bloodStock.${bloodType}.units`]: { $gte: parseInt(minUnits) || 1 }
+      [`bloodStock.${bloodType}.units`]: { $gte: minUnitsInt }
     };
 
     console.log(`[BLOOD_SEARCH] Primary Query on blood_stock:`, JSON.stringify(stockQuery));
-
-    // 2. Perform Aggregation
-    // - Match stock requirements
-    // - Lookup organization details using bloodBankId
-    // - Filter by city if provided
-    // - Project final shape
 
     const pipeline = [
       { $match: stockQuery },
@@ -526,7 +600,7 @@ export class Organization {
           bloodStock: 1, // Keep the stock object from blood_stock collection to display counts
           lastStockUpdateAt: 1,
 
-          // Flatten needed organization fields so frontend doesn't break
+          // Organization Details
           name: "$organization.name",
           organizationCode: "$organization.organizationCode",
           type: "$organization.type",
@@ -549,8 +623,8 @@ export class Organization {
     }
 
     const results = await db.collection("blood_stock").aggregate(pipeline).toArray();
-    console.log(`[BLOOD_SEARCH] Found ${results.length} results from merged blood_stock`);
-
+    console.log(`[BLOOD_SEARCH] Found ${results.length} results via Normal Search`);
     return results;
   }
+
 }
