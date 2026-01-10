@@ -1,10 +1,11 @@
 import HospitalBloodRequest from "../../models/hospital/HospitalBloodRequest.js";
+import UrgencyCalculator from "../../utils/UrgencyCalculator.js";
 
 export class HospitalBloodRequestController {
     // ============= REQUEST CRUD =============
 
     /**
-     * Create a new blood request
+     * Create a new blood request with auto-calculated urgency
      * POST /api/hospital-blood-requests
      */
     static async createRequest(req, res) {
@@ -14,8 +15,10 @@ export class HospitalBloodRequestController {
                 bloodBankId,
                 bloodGroup,
                 unitsRequired,
-                urgency,
-                notes
+                patientAge,
+                patientCondition,
+                department,
+                medicalReason
             } = req.body;
 
             // Validate required fields
@@ -35,22 +38,26 @@ export class HospitalBloodRequestController {
                 });
             }
 
-            // Validate urgency
-            const validUrgencies = ["CRITICAL", "HIGH", "MEDIUM", "LOW"];
-            if (urgency && !validUrgencies.includes(urgency)) {
-                return res.status(400).json({
-                    success: false,
-                    message: "Invalid urgency level"
-                });
-            }
+            // AUTO-CALCULATE URGENCY based on patient details
+            const urgencyData = UrgencyCalculator.calculateUrgency({
+                patientAge: parseInt(patientAge) || 30,
+                patientCondition: patientCondition || "Stable",
+                department: department || "General Ward",
+                unitsRequired: parseInt(unitsRequired)
+            });
 
             const requestData = {
                 hospitalId,
                 bloodBankId,
                 bloodGroup,
                 unitsRequired,
-                urgency: urgency || "MEDIUM",
-                hospitalNotes: notes || ""
+                urgency: urgencyData.urgency,
+                priority: urgencyData.priority,
+                patientAge,
+                patientCondition,
+                department,
+                medicalReason: medicalReason || "",
+                hospitalNotes: `${medicalReason || ""} [Auto-calculated urgency: ${urgencyData.urgency}]`
             };
 
             const request = await HospitalBloodRequest.create(requestData);
@@ -58,7 +65,10 @@ export class HospitalBloodRequestController {
             res.status(201).json({
                 success: true,
                 message: "Blood request created successfully",
-                data: request
+                data: {
+                    ...request,
+                    urgencyCalculation: urgencyData
+                }
             });
         } catch (error) {
             console.error("Error creating blood request:", error);

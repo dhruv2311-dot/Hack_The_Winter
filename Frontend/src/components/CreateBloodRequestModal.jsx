@@ -3,7 +3,8 @@ import { getVerifiedBloodBanks } from "../services/bloodBankApi";
 import { createBloodRequest } from "../services/hospitalBloodRequestApi";
 
 const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
-const URGENCY_LEVELS = ["CRITICAL", "HIGH", "MEDIUM", "LOW"];
+const DEPARTMENTS = ["ICU", "Emergency", "Operation Theatre", "Cardiology", "Trauma", "General Ward", "Other"];
+const CONDITIONS = ["Critical", "Severe", "Moderate", "Stable"];
 
 export default function CreateBloodRequestModal({ isOpen, onClose, onSuccess, hospitalId, preSelectedBloodBank }) {
   const [bloodBanks, setBloodBanks] = useState([]);
@@ -15,8 +16,10 @@ export default function CreateBloodRequestModal({ isOpen, onClose, onSuccess, ho
     bloodBankId: preSelectedBloodBank?._id || "",
     bloodGroup: "",
     unitsRequired: "",
-    urgency: "MEDIUM",
-    notes: ""
+    patientAge: "",
+    patientCondition: "Stable",
+    department: "General Ward",
+    medicalReason: ""
   });
 
   const token = localStorage.getItem('token');
@@ -105,8 +108,10 @@ export default function CreateBloodRequestModal({ isOpen, onClose, onSuccess, ho
         bloodBankId: formData.bloodBankId,
         bloodGroup: formData.bloodGroup,
         unitsRequired: parseInt(formData.unitsRequired),
-        urgency: formData.urgency,
-        notes: formData.notes
+        patientAge: parseInt(formData.patientAge),
+        patientCondition: formData.patientCondition,
+        department: formData.department,
+        medicalReason: formData.medicalReason
       };
 
       await createBloodRequest(requestData, token);
@@ -116,8 +121,10 @@ export default function CreateBloodRequestModal({ isOpen, onClose, onSuccess, ho
         bloodBankId: "",
         bloodGroup: "",
         unitsRequired: "",
-        urgency: "MEDIUM",
-        notes: ""
+        patientAge: "",
+        patientCondition: "Stable",
+        department: "General Ward",
+        medicalReason: ""
       });
 
       setSubmitting(false);
@@ -255,52 +262,73 @@ export default function CreateBloodRequestModal({ isOpen, onClose, onSuccess, ho
               />
             </div>
 
-            {/* Urgency Level */}
+            {/* Patient Age */}
             <div>
               <label className="block text-sm font-semibold text-[#2f1012] mb-2">
-                Urgency Level *
+                Patient Age (Years) *
               </label>
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                {URGENCY_LEVELS.map((level) => (
-                  <label
-                    key={level}
-                    className={`flex items-center justify-center cursor-pointer rounded-xl border-2 px-4 py-3 text-sm font-semibold transition ${
-                      formData.urgency === level
-                        ? level === "CRITICAL"
-                          ? "border-[#c62832] bg-[#fff1ed] text-[#8f0f1a]"
-                          : level === "HIGH"
-                          ? "border-[#f0c18c] bg-[#fff3e4] text-[#b05f09]"
-                          : level === "MEDIUM"
-                          ? "border-[#f3e3a2] bg-[#fef6e0] text-[#9d7b08]"
-                          : "border-[#b6d8f2] bg-[#e7f3ff] text-[#185a9d]"
-                        : "border-[#f3c9c0] bg-white text-[#7a4c4c] hover:border-[#8f0f1a]"
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="urgency"
-                      value={level}
-                      checked={formData.urgency === level}
-                      onChange={handleChange}
-                      className="sr-only"
-                    />
-                    {level}
-                  </label>
-                ))}
-              </div>
+              <input
+                type="number"
+                name="patientAge"
+                value={formData.patientAge}
+                onChange={handleChange}
+                min="0"
+                max="120"
+                required
+                placeholder="Enter patient age"
+                className="w-full rounded-xl border border-[#f3c9c0] bg-white px-4 py-3 text-[#2f1012] focus:border-[#8f0f1a] focus:outline-none focus:ring-2 focus:ring-[#8f0f1a]/20"
+              />
             </div>
 
-            {/* Notes */}
+            {/* Patient Condition */}
             <div>
               <label className="block text-sm font-semibold text-[#2f1012] mb-2">
-                Additional Notes (Optional)
+                Patient Condition *
+              </label>
+              <select
+                name="patientCondition"
+                value={formData.patientCondition}
+                onChange={handleChange}
+                className="w-full rounded-xl border border-[#f3c9c0] bg-white px-4 py-3 text-[#2f1012] focus:border-[#8f0f1a] focus:outline-none focus:ring-2 focus:ring-[#8f0f1a]/20"
+              >
+                {CONDITIONS.map((condition) => (
+                  <option key={condition} value={condition}>
+                    {condition}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Department */}
+            <div>
+              <label className="block text-sm font-semibold text-[#2f1012] mb-2">
+                Department/Ward *
+              </label>
+              <select
+                name="department"
+                value={formData.department}
+                onChange={handleChange}
+                className="w-full rounded-xl border border-[#f3c9c0] bg-white px-4 py-3 text-[#2f1012] focus:border-[#8f0f1a] focus:outline-none focus:ring-2 focus:ring-[#8f0f1a]/20"
+              >
+                {DEPARTMENTS.map((dept) => (
+                  <option key={dept} value={dept}>
+                    {dept}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Medical Reason */}
+            <div>
+              <label className="block text-sm font-semibold text-[#2f1012] mb-2">
+                Medical Reason/Diagnosis (Optional)
               </label>
               <textarea
-                name="notes"
-                value={formData.notes}
+                name="medicalReason"
+                value={formData.medicalReason}
                 onChange={handleChange}
-                rows="4"
-                placeholder="e.g., Emergency surgery, patient condition details..."
+                rows="3"
+                placeholder="e.g., Trauma case, Childbirth complications, Surgery preparation..."
                 className="w-full rounded-xl border border-[#f3c9c0] bg-white px-4 py-3 text-[#2f1012] focus:border-[#8f0f1a] focus:outline-none focus:ring-2 focus:ring-[#8f0f1a]/20"
               />
             </div>
