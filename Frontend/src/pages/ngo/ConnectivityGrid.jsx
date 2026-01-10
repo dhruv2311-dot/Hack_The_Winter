@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Plus,
   Search,
@@ -35,15 +35,25 @@ export default function ConnectivityGrid() {
     bloodBankId: "" // Added field
   });
 
-  useEffect(() => {
-    fetchInitialData();
-  }, []);
+  const fetchRequests = useCallback(
+    async (campIdOverride) => {
+      try {
+        setLoading(true);
+        const campToUse = campIdOverride ?? selectedCamp;
+        const res = await getNgoRequests(campToUse);
+        if (res.data?.success) {
+          setRequests(res.data.data);
+        }
+      } catch (error) {
+        console.error("Error fetching requests", error);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [selectedCamp]
+  );
 
-  useEffect(() => {
-    fetchRequests();
-  }, [selectedCamp]);
-
-  const fetchInitialData = async () => {
+  const fetchInitialData = useCallback(async () => {
     try {
       const campsRes = await getMyCamps();
       if (campsRes.data?.success) {
@@ -57,28 +67,18 @@ export default function ConnectivityGrid() {
         setBloodBanks(bbRes.data.data);
       }
 
-      await fetchRequests();
+      await fetchRequests(selectedCamp);
     } catch (error) {
       console.error("Error fetching initial data", error);
       toast.error("Failed to load data");
     } finally {
       setLoading(false);
     }
-  };
+  }, [fetchRequests, selectedCamp]);
 
-  const fetchRequests = async () => {
-    try {
-      setLoading(true);
-      const res = await getNgoRequests(selectedCamp);
-      if (res.data?.success) {
-        setRequests(res.data.data);
-      }
-    } catch (error) {
-      console.error("Error fetching requests", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  useEffect(() => {
+    fetchInitialData();
+  }, [fetchInitialData]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -114,6 +114,17 @@ export default function ConnectivityGrid() {
       default: return 'bg-amber-50 text-amber-600 border-amber-200';
     }
   };
+
+  if (loading) {
+    return (
+      <section className="flex min-h-[300px] items-center justify-center rounded-[32px] border border-[#ffe5ed] bg-white p-8 shadow-[0_35px_90px_rgba(42,8,20,0.08)]">
+        <div className="text-center">
+          <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-[#ff4d6d] border-t-transparent" />
+          <p className="text-sm font-semibold text-[#7a4456]">Loading resource data...</p>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="space-y-6">

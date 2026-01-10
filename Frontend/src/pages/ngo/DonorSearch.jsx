@@ -1,10 +1,8 @@
 import { useMemo, useState } from "react";
-import { useNgoData } from "./context";
 import { bloodGroups, formatDate } from "./constants";
 import { searchDonorsByCity } from "../../services/ngoApi";
 
 export default function DonorRegistry() {
-  const {} = useNgoData();
   const [bloodFilter, setBloodFilter] = useState("ALL");
   const [citySearch, setCitySearch] = useState("");
   const [searchedCity, setSearchedCity] = useState(""); // Store the city that was actually searched
