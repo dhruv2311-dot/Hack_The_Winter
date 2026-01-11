@@ -391,7 +391,31 @@ export class HospitalBloodRequestController {
             const { id } = req.params;
             const { rejectionReason } = req.body;
 
-            const success = await HospitalBloodRequest.rejectRequest(id, rejectionReason || "Not specified");
+            // Validate rejection reason is provided
+            if (!rejectionReason || typeof rejectionReason !== 'string' || rejectionReason.trim().length === 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Rejection reason is required and cannot be empty"
+                });
+            }
+
+            // Validate minimum length
+            if (rejectionReason.trim().length < 5) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Rejection reason must be at least 5 characters long"
+                });
+            }
+
+            // Validate maximum length
+            if (rejectionReason.length > 500) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Rejection reason cannot exceed 500 characters"
+                });
+            }
+
+            const success = await HospitalBloodRequest.rejectRequest(id, rejectionReason.trim());
 
             if (!success) {
                 return res.status(404).json({
