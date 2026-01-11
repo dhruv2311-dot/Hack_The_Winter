@@ -1,5 +1,7 @@
 import HospitalBloodRequest from "../../models/hospital/HospitalBloodRequest.js";
 import UrgencyCalculator from "../../utils/UrgencyCalculator.js";
+import PriorityRequestHandler from "../../services/PriorityRequestHandler.js";
+import bloodStockModel from "../../models/admin/BloodStock.js";
 
 export class HospitalBloodRequestController {
     // ============= REQUEST CRUD =============
@@ -38,36 +40,66 @@ export class HospitalBloodRequestController {
                 });
             }
 
+            // Check blood stock availability at blood bank
+            const bloodStock = await bloodStockModel.findByBloodBankId(bloodBankId);
+            
+            const availableUnits = bloodStock?.bloodStock?.[bloodGroup]?.units || 0;
+            const unitsRequiredInt = parseInt(unitsRequired);
+
+            if (unitsRequiredInt > availableUnits) {
+                return res.status(400).json({
+                    success: false,
+                    message: `Insufficient blood stock. Requested: ${unitsRequiredInt} units, Available: ${availableUnits} units`,
+                    availableUnits: availableUnits,
+                    requestedUnits: unitsRequiredInt
+                });
+            }
+
             // AUTO-CALCULATE URGENCY based on patient details
             const urgencyData = UrgencyCalculator.calculateUrgency({
                 patientAge: parseInt(patientAge) || 30,
                 patientCondition: patientCondition || "Stable",
                 department: department || "General Ward",
-                unitsRequired: parseInt(unitsRequired)
+                unitsRequired: unitsRequiredInt
             });
 
             const requestData = {
                 hospitalId,
                 bloodBankId,
                 bloodGroup,
-                unitsRequired,
+                unitsRequired: unitsRequiredInt,
                 urgency: urgencyData.urgency,
                 priority: urgencyData.priority,
-                patientAge,
-                patientCondition,
-                department,
+                // Structured patient info for priority system
+                patientInfo: {
+                    patientId: null,
+                    age: parseInt(patientAge) || 30,
+                    gender: null,
+                    condition: patientCondition || "Stable",
+                    department: department || "General Ward"
+                },
                 medicalReason: medicalReason || "",
                 hospitalNotes: `${medicalReason || ""} [Auto-calculated urgency: ${urgencyData.urgency}]`
             };
 
-            const request = await HospitalBloodRequest.create(requestData);
+            // Get current blood availability for priority calculation
+            const availability = await PriorityRequestHandler.getBloodAvailability(bloodGroup);
+
+            // Enrich request data with priority calculation
+            const enrichedData = await PriorityRequestHandler.enrichRequestWithPriority(
+                requestData,
+                availability
+            );
+
+            const request = await HospitalBloodRequest.create(enrichedData);
 
             res.status(201).json({
                 success: true,
                 message: "Blood request created successfully",
                 data: {
                     ...request,
-                    urgencyCalculation: urgencyData
+                    urgencyCalculation: urgencyData,
+                    priority: PriorityRequestHandler.formatPriorityForResponse(request)
                 }
             });
         } catch (error) {
@@ -75,6 +107,55 @@ export class HospitalBloodRequestController {
             res.status(500).json({
                 success: false,
                 message: "Failed to create blood request",
+                error: error.message
+            });
+        }
+    }
+
+    /**
+     * Get blood stock availability for a specific blood bank
+     * GET /api/hospital-blood-requests/blood-stock/:bloodBankId
+     */
+    static async getBloodStockAvailability(req, res) {
+        try {
+            const { bloodBankId } = req.params;
+
+            if (!bloodBankId) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Blood Bank ID is required"
+                });
+            }
+
+            const bloodStock = await bloodStockModel.findByBloodBankId(bloodBankId);
+
+            if (!bloodStock) {
+                return res.status(404).json({
+                    success: false,
+                    message: "Blood stock not found for this blood bank"
+                });
+            }
+
+            // Format the response with available units for each blood group
+            const availability = {};
+            Object.keys(bloodStock.bloodStock).forEach(group => {
+                availability[group] = bloodStock.bloodStock[group].units;
+            });
+
+            res.status(200).json({
+                success: true,
+                data: {
+                    bloodBankId: bloodBankId,
+                    availability: availability,
+                    totalUnitsAvailable: bloodStock.totalUnitsAvailable,
+                    lastUpdated: bloodStock.lastStockUpdateAt
+                }
+            });
+        } catch (error) {
+            console.error("Error fetching blood stock availability:", error);
+            res.status(500).json({
+                success: false,
+                message: "Failed to fetch blood stock availability",
                 error: error.message
             });
         }
@@ -153,8 +234,18 @@ export class HospitalBloodRequestController {
      */
     static async getRequestsByBloodBank(req, res) {
         try {
-            const { bloodBankId } = req.params;
+            let { bloodBankId } = req.params;
             const { status, urgency, bloodGroup, page, limit } = req.query;
+
+            // Auto-scope by user role and organization
+            const userRole = req.user?.role || req.admin?.role;
+            const userOrgId = req.organization?.id || req.user?.organizationId;
+            const userOrgType = req.organization?.type || req.user?.organizationType;
+
+            // If user is blood bank staff, override to their organization
+            if ((userRole === 'BLOOD_BANK_STAFF' || userOrgType === 'bloodbank') && userOrgId) {
+                bloodBankId = userOrgId;
+            }
 
             const filters = {};
             if (status) filters.status = status;
@@ -171,7 +262,9 @@ export class HospitalBloodRequestController {
             res.status(200).json({
                 success: true,
                 data: result.requests,
-                pagination: result.pagination
+                pagination: result.pagination,
+                userRole,
+                scoped: userRole === 'BLOOD_BANK_STAFF' || userOrgType === 'bloodbank'
             });
         } catch (error) {
             console.error("Error fetching blood bank requests:", error);
