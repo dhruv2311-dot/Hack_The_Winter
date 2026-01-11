@@ -4,6 +4,11 @@ import { useAuth } from "../../context/AuthContext";
 import { toast } from "react-hot-toast";
 import CreateBloodRequestModal from "../../components/CreateBloodRequestModal";
 
+// 🎯 RADIUS ESCALATION CONFIGURATION
+const RADIUS_STAGES = [5, 10, 20, 30]; // Progressive stages in km
+const MAX_BLOOD_BANK_RADIUS = 30;      // Maximum for blood banks
+const DONOR_SEARCH_RADIUS = 30;        // Use max radius for donors
+
 export default function SearchBlood() {
   const [filters, setFilters] = useState({
     bloodType: "O+",
@@ -22,6 +27,7 @@ export default function SearchBlood() {
   const [showRadiusOption, setShowRadiusOption] = useState(false);
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
   const [selectedBank, setSelectedBank] = useState(null);
+  const [maxRadiusReached, setMaxRadiusReached] = useState(false);
 
   // Fetch Hospital Coordinates on mount (DB first, then Browser)
   useEffect(() => {
@@ -75,6 +81,7 @@ export default function SearchBlood() {
   useEffect(() => {
     setRadius(5);
     setShowRadiusOption(false);
+    setMaxRadiusReached(false); // Reset max radius flag
   }, [filters.bloodType]);
 
   // Haversine Formula to calculate distance in meters
@@ -176,10 +183,37 @@ export default function SearchBlood() {
   };
 
   const handleIncreaseRadius = () => {
-      const newRadius = radius + 5;
-      setRadius(newRadius);
-      // Trigger search immediately with new radius
-      handleSearch(null, newRadius);
+    const currentIndex = RADIUS_STAGES.indexOf(radius);
+    
+    // Check if already at maximum radius
+    if (currentIndex === RADIUS_STAGES.length - 1 || radius >= MAX_BLOOD_BANK_RADIUS) {
+      // Already at max (50 km) - trigger donor search automatically
+      setMaxRadiusReached(true);
+      toast.error(`Maximum search radius (${MAX_BLOOD_BANK_RADIUS}km) reached for blood banks.`, {
+        duration: 4000,
+        icon: '🚨'
+      });
+      toast.success(`Searching for donors within ${DONOR_SEARCH_RADIUS}km instead...`, {
+        duration: 4000,
+        icon: '🔄'
+      });
+      
+      // Note: The backend already handles donor fallback automatically
+      // when no blood banks are found. This just informs the user.
+      return;
+    }
+    
+    // Move to next radius stage
+    const newRadius = RADIUS_STAGES[currentIndex + 1];
+    setRadius(newRadius);
+    
+    toast(`Expanding search to ${newRadius}km radius...`, {
+      duration: 2000,
+      icon: '🌍'
+    });
+    
+    // Trigger search immediately with new radius
+    handleSearch(null, newRadius);
   };
 
   return (
@@ -255,6 +289,53 @@ export default function SearchBlood() {
       {searched && (
         <div className="space-y-4">
             
+            {/* Radius Stage Progression Indicator */}
+            {hospitalCoords && !loading && (
+              <div className="rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 p-4 border border-blue-100 shadow-sm">
+                <p className="text-xs font-bold text-gray-600 mb-3 uppercase tracking-wide">Search Radius Progression</p>
+                <div className="flex items-center justify-between gap-2">
+                  {RADIUS_STAGES.map((stage, index) => {
+                    const isCompleted = RADIUS_STAGES.indexOf(radius) > index;
+                    const isCurrent = radius === stage;
+                    const isUpcoming = RADIUS_STAGES.indexOf(radius) < index;
+                    
+                    return (
+                      <div key={stage} className="flex items-center flex-1">
+                        <div className="flex flex-col items-center flex-1">
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all ${
+                            isCurrent 
+                              ? 'bg-indigo-600 text-white ring-4 ring-indigo-200 scale-110' 
+                              : isCompleted
+                              ? 'bg-green-500 text-white'
+                              : 'bg-gray-200 text-gray-500'
+                          }`}>
+                            {isCompleted ? '✓' : `${stage}`}
+                          </div>
+                          <p className={`text-[10px] mt-1 font-semibold ${
+                            isCurrent ? 'text-indigo-700' : isCompleted ? 'text-green-600' : 'text-gray-400'
+                          }`}>
+                            {stage}km
+                          </p>
+                        </div>
+                        {index < RADIUS_STAGES.length - 1 && (
+                          <div className={`h-1 flex-1 mx-1 rounded transition-all ${
+                            isCompleted ? 'bg-green-400' : 'bg-gray-200'
+                          }`} />
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+                {maxRadiusReached && (
+                  <div className="mt-3 text-center">
+                    <span className="inline-block bg-red-100 text-red-700 text-xs px-3 py-1 rounded-full font-bold">
+                      🚨 Maximum Radius Reached - Donor Search Active
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+            
             {/* Radius Control Bar (Dedicated Visibility) */}
             {hospitalCoords && !loading && (
               <div className="mb-2 flex items-center justify-between rounded-xl bg-indigo-50 p-4 border border-indigo-100 shadow-sm animate-fade-in">
@@ -263,15 +344,31 @@ export default function SearchBlood() {
                         📍
                       </div>
                       <div>
-                          <p className="text-[10px] font-bold uppercase tracking-wider text-indigo-400">Current Radius</p>
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-indigo-400">
+                            Current Radius {maxRadiusReached && '(Maximum)'}
+                          </p>
                           <p className="text-xl font-black text-indigo-900 leading-none">{radius} KM</p>
+                          {!maxRadiusReached && (
+                            <p className="text-[9px] text-indigo-500 mt-0.5">
+                              Stage {RADIUS_STAGES.indexOf(radius) + 1}/{RADIUS_STAGES.length}
+                            </p>
+                          )}
                       </div>
                   </div>
                   <button 
                       onClick={handleIncreaseRadius}
-                      className="flex items-center gap-2 rounded-lg bg-indigo-600 px-5 py-2.5 font-bold text-white shadow-md hover:bg-indigo-700 hover:shadow-lg transition transform active:scale-95"
+                      disabled={maxRadiusReached || radius >= MAX_BLOOD_BANK_RADIUS}
+                      className={`flex items-center gap-2 rounded-lg px-5 py-2.5 font-bold text-white shadow-md transition transform active:scale-95 ${
+                        maxRadiusReached || radius >= MAX_BLOOD_BANK_RADIUS
+                          ? 'bg-gray-400 cursor-not-allowed opacity-60'
+                          : 'bg-indigo-600 hover:bg-indigo-700 hover:shadow-lg'
+                      }`}
                   >
-                      <span>🌍 Increase Range (+5km)</span>
+                      {maxRadiusReached || radius >= MAX_BLOOD_BANK_RADIUS ? (
+                        <span>🚫 Max Radius Reached</span>
+                      ) : (
+                        <span>🌍 Expand to {RADIUS_STAGES[RADIUS_STAGES.indexOf(radius) + 1]}km</span>
+                      )}
                   </button>
               </div>
             )}
@@ -326,9 +423,18 @@ export default function SearchBlood() {
                {showRadiusOption && !loading && (
                   <button
                     onClick={handleIncreaseRadius}
-                    className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-md transition-all transform hover:scale-105"
+                    disabled={maxRadiusReached || radius >= MAX_BLOOD_BANK_RADIUS}
+                    className={`flex items-center gap-2 px-6 py-3 font-bold rounded-lg shadow-md transition-all transform ${
+                      maxRadiusReached || radius >= MAX_BLOOD_BANK_RADIUS
+                        ? 'bg-gray-400 text-white cursor-not-allowed opacity-60'
+                        : 'bg-blue-600 hover:bg-blue-700 text-white hover:scale-105'
+                    }`}
                   >
-                    <span>🔄 Increase Search Radius (+5km)</span>
+                    {maxRadiusReached || radius >= MAX_BLOOD_BANK_RADIUS ? (
+                      <span>� Maximum Radius Reached ({MAX_BLOOD_BANK_RADIUS}km)</span>
+                    ) : (
+                      <span>🔄 Expand Search to {RADIUS_STAGES[RADIUS_STAGES.indexOf(radius) + 1]}km</span>
+                    )}
                   </button>
                )}
             </div>
