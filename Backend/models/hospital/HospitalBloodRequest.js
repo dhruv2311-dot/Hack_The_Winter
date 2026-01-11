@@ -48,15 +48,25 @@ class HospitalBloodRequest {
             bloodBankId: new ObjectId(requestData.bloodBankId),
 
             // Request Details
+            requestCode: requestData.requestCode || `REQ-${Date.now()}`,
             bloodGroup: requestData.bloodGroup, // A+, A-, B+, B-, AB+, AB-, O+, O-
             component: requestData.component || "WHOLE_BLOOD", // WHOLE_BLOOD, PLASMA, PLATELETS, RBC
             unitsRequired: requestData.unitsRequired,
             urgency: requestData.urgency || "MEDIUM", // CRITICAL, HIGH, MEDIUM, LOW
 
-            // Patient Information (anonymized for privacy)
-            patientAge: requestData.patientAge || null,
-            patientGender: requestData.patientGender || null,
-            medicalCondition: requestData.medicalCondition || "",
+            // Patient Information - Structured format
+            patientInfo: {
+                age: requestData.patientInfo?.age || requestData.patientAge || null,
+                gender: requestData.patientInfo?.gender || requestData.patientGender || null,
+                condition: requestData.patientInfo?.condition || requestData.medicalCondition || "",
+                department: requestData.patientInfo?.department || null
+            },
+
+            // ROUND 2: Intelligent Priority System
+            priorityScore: requestData.priorityScore || 0, // 0-255 calculated score
+            priorityCategory: requestData.priorityCategory || "MEDIUM", // CRITICAL | HIGH | MEDIUM | LOW
+            priorityCalculatedAt: requestData.priorityCalculatedAt || new Date(),
+            priorityDetails: requestData.priorityDetails || null, // Breakdown of priority calculation
 
             // Request Status
             status: "PENDING", // PENDING, ACCEPTED, REJECTED, FULFILLED, CANCELLED

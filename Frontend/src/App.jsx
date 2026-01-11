@@ -41,6 +41,9 @@ import NgoConnectivity from "./pages/ngo/ConnectivityGrid";
 import SuperAdminLayout from "./layouts/SuperAdminLayout";
 import SuperAdminDashboard from "./pages/superadmin/Dashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
+// Round 2: Priority System
+import PriorityQueueDashboard from "./components/admin/PriorityQueueDashboard";
+
 
 export default function App() {
   return (
@@ -96,6 +99,8 @@ export default function App() {
           <Route path="admin-messages" element={<AdminMessages />} />
 
           <Route path="profile-settings" element={<ProfileSettings />} />
+          {/* Round 2: Priority Queue */}
+          <Route path="priority-queue" element={<PriorityQueueDashboard />} />
         </Route>
 
         {/* Hospital Dashboard - Protected Routes */}
@@ -153,6 +158,8 @@ export default function App() {
           <Route path="blood-stock" element={<BloodStockManagement />} />
           <Route path="approvals" element={<ApprovalsManagement />} />
           <Route path="settings" element={<Settings />} />
+          {/* Round 2: Priority Queue */}
+          <Route path="priority-queue" element={<PriorityQueueDashboard />} />
         </Route>
       </Routes>
     </>

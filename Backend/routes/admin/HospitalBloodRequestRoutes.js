@@ -17,7 +17,14 @@ import {
   addCommunicationLog,
   getRequestStatistics,
   getAverageResponseTime,
-  deleteRequest
+  deleteRequest,
+  // Priority system endpoints
+  getPriorityQueue,
+  getByPriorityCategory,
+  recalculatePriority,
+  getPriorityDashboard,
+  batchRecalculatePriorities,
+  getPriorityConfiguration
 } from "../../controllers/admin/HospitalBloodRequestController.js";
 
 const router = express.Router();
@@ -84,5 +91,25 @@ router.get("/stats/response-time", getAverageResponseTime);
 
 // Delete request (admin only)
 router.delete("/:id", deleteRequest);
+
+// ============= ROUND 2: PRIORITY SYSTEM ROUTES =============
+
+// Get priority queue (all pending requests sorted by priority)
+router.get("/queue/priority", getPriorityQueue);
+
+// Get requests by priority category (CRITICAL, HIGH, MEDIUM, LOW)
+router.get("/priority/category", getByPriorityCategory);
+
+// Get priority dashboard statistics
+router.get("/priority/dashboard", getPriorityDashboard);
+
+// Get priority system configuration and validation
+router.get("/priority/config", getPriorityConfiguration);
+
+// Recalculate priority for specific request
+router.post("/:id/priority/recalculate", recalculatePriority);
+
+// Batch recalculate all priorities (admin only)
+router.post("/priority/batch-recalculate", batchRecalculatePriorities);
 
 export default router;

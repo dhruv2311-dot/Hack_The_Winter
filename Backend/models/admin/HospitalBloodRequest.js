@@ -10,7 +10,7 @@ import { ObjectId } from "mongodb";
  * - Enable real-time blood availability matching
  * - Maintain request history and analytics
  * 
- * COLLECTION: hospital_blood_requests
+ * COLLECTION: hospitalBloodRequests
  * 
  * RELATIONSHIPS:
  * - hospitalId → organizations (type: hospital)
@@ -24,7 +24,7 @@ import { ObjectId } from "mongodb";
  */
 class HospitalBloodRequest {
   constructor() {
-    this.collectionName = "hospital_blood_requests";
+    this.collectionName = "hospitalBloodRequests";
   }
 
   getCollection() {
@@ -60,6 +60,13 @@ class HospitalBloodRequest {
       // Urgency and Priority
       urgency: requestData.urgency || "MEDIUM", // CRITICAL | HIGH | MEDIUM | LOW
       priority: requestData.priority || "NORMAL", // EMERGENCY | HIGH | NORMAL
+      
+      // ROUND 2: Intelligent Priority System ⭐
+      priorityScore: requestData.priorityScore || 0, // 0-255 calculated score
+      priorityCategory: requestData.priorityCategory || "MEDIUM", // CRITICAL | HIGH | MEDIUM | LOW
+      priorityCalculatedAt: new Date(),
+      priorityDetails: requestData.priorityDetails || null, // Breakdown of priority calculation
+      priorityRecalculatedAt: null, // When priority was last recalculated
       
       // Patient Information (anonymized for privacy)
       patientInfo: {
@@ -670,6 +677,143 @@ class HospitalBloodRequest {
       ]).toArray();
     } catch (error) {
       console.error("Error getting average response time:", error);
+      return [];
+    }
+  }
+
+  /**
+   * ROUND 2: UPDATE - Update priority score and category
+   * Called when request is created or when blood availability changes
+   */
+  async updatePriority(requestId, priorityScore, priorityCategory, priorityDetails) {
+    const collection = this.getCollection();
+    try {
+      const result = await collection.updateOne(
+        { _id: new ObjectId(requestId) },
+        {
+          $set: {
+            priorityScore: priorityScore,
+            priorityCategory: priorityCategory,
+            priorityDetails: priorityDetails,
+            priorityRecalculatedAt: new Date(),
+            updatedAt: new Date()
+          }
+        }
+      );
+      return result.modifiedCount > 0;
+    } catch (error) {
+      console.error("Error updating priority:", error);
+      return false;
+    }
+  }
+
+  /**
+   * ROUND 2: READ - Get pending requests sorted by priority
+   */
+  async getPendingByPriority(filters = {}) {
+    const collection = this.getCollection();
+    try {
+      const query = {
+        status: "PENDING",
+        ...filters
+      };
+
+      return await collection
+        .find(query)
+        .sort({ priority: -1, createdAt: 1 }) // Highest priority first, then oldest first
+        .toArray();
+    } catch (error) {
+      console.error("Error getting pending requests by priority:", error);
+      return [];
+    }
+  }
+
+  /**
+   * ROUND 2: READ - Get requests by urgency (using existing schema)
+   */
+  async getByPriorityCategory(category, limit = 50) {
+    const collection = this.getCollection();
+    try {
+      return await collection
+        .find({
+          urgency: category,
+          status: "PENDING"
+        })
+        .sort({ priority: -1, createdAt: 1 })
+        .limit(limit)
+        .toArray();
+    } catch (error) {
+      console.error(`Error getting ${category} priority requests:`, error);
+      return [];
+    }
+  }
+
+  /**
+   * ROUND 2: READ - Get priority statistics for dashboard
+   */
+  async getPriorityStats() {
+    const collection = this.getCollection();
+    try {
+      return await collection.aggregate([
+        {
+          $match: {
+            status: "PENDING"
+          }
+        },
+        {
+          $facet: {
+            byUrgency: [
+              {
+                $group: {
+                  _id: "$urgency",
+                  count: { $sum: 1 },
+                  avgPriority: { $avg: "$priority" }
+                }
+              },
+              {
+                $sort: { _id: 1 }
+              }
+            ],
+            byBloodGroup: [
+              {
+                $group: {
+                  _id: "$bloodGroup",
+                  count: { $sum: 1 },
+                  avgPriority: { $avg: "$priority" }
+                }
+              },
+              {
+                $sort: { avgPriority: -1 }
+              }
+            ],
+            totals: [
+              {
+                $group: {
+                  _id: null,
+                  totalRequests: { $sum: 1 },
+                  totalCritical: {
+                    $sum: { $cond: [{ $eq: ["$urgency", "CRITICAL"] }, 1, 0] }
+                  },
+                  totalHigh: {
+                    $sum: { $cond: [{ $eq: ["$urgency", "HIGH"] }, 1, 0] }
+                  },
+                  totalMedium: {
+                    $sum: { $cond: [{ $eq: ["$urgency", "MEDIUM"] }, 1, 0] }
+                  },
+                  totalLow: {
+                    $sum: { $cond: [{ $eq: ["$urgency", "LOW"] }, 1, 0] }
+                  },
+                  avgPriority: { $avg: "$priority" },
+                  maxPriority: { $max: "$priority" },
+                  minPriority: { $min: "$priority" }
+                }
+              }
+            ]
+          }
+        }
+      ]).toArray();
+    } catch (error) {
+      console.error("Error getting priority statistics:", error);
       return [];
     }
   }

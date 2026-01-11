@@ -293,7 +293,7 @@ app.use("/api/admin/alerts", alertRoutes);
 app.use("/api/admin/logs", auditRoutes);
 app.use("/api/admin/dashboard", dashboardRoutes);
 app.use("/api/admin/drives", bloodBankNgoDriveRoutes);
-app.use("/api/admin/requests", adminHospitalBloodRequestRoutes);
+app.use("/api/admin/blood-requests", adminHospitalBloodRequestRoutes);
 app.use("/api/organization-users", orgUsersRoutes);  // ← Organization users
 app.use("/api/hospitals", hospitalRoutes);  // ← Hospital routes
 app.use("/api/hospital-ngo-drives", hospitalNgoDriveRoutes);  // ← Hospital-NGO drives

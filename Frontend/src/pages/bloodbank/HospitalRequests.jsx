@@ -7,6 +7,8 @@ import {
   completeBloodRequest,
 } from "../../services/hospitalBloodRequestApi";
 import { getHospitalById } from "../../services/hospitalApi";
+import RequestDetailModal from "../../components/RequestDetailModal";
+import RejectionReasonModal from "../../components/RejectionReasonModal";
 import toast from "react-hot-toast";
 import { getVerificationStatusLabel } from "../../utils/organizationStatus";
 
@@ -50,11 +52,16 @@ export default function HospitalRequests() {
   const [hospitalNames, setHospitalNames] = useState({});
   const [requestStatusFilter, setRequestStatusFilter] = useState("ALL");
   const [requestUrgencyFilter, setRequestUrgencyFilter] = useState("ALL");
+  const [selectedRequestId, setSelectedRequestId] = useState(null);
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [rejectionModal, setRejectionModal] = useState({ isOpen: false, request: null });
+  const [actionsLocked, setActionsLocked] = useState(false);
 
   const { organization, isVerified } = useOutletContext() || {};
   const verificationStatus =
     getVerificationStatusLabel(organization) || (isVerified ? "VERIFIED" : "PENDING");
-  const actionsLocked = !isVerified;
+  const isVerifiedUser = !isVerified;
+  const token = localStorage.getItem("token");
 
   useEffect(() => {
     fetchRequests();
@@ -154,6 +161,14 @@ export default function HospitalRequests() {
       return;
     }
 
+    // If rejecting, show rejection reason modal instead
+    if (nextStatus === "REJECTED") {
+      setRejectionModal({ isOpen: true, request });
+      return;
+    }
+
+    setActionsLocked(true);
+
     try {
       let response;
 
@@ -161,12 +176,6 @@ export default function HospitalRequests() {
         response = await acceptBloodRequest(
           request._id,
           { bloodBankResponse: "Accepted via dashboard" },
-          token
-        );
-      } else if (nextStatus === "REJECTED") {
-        response = await rejectBloodRequest(
-          request._id,
-          { rejectionReason: "Rejected via dashboard" },
           token
         );
       } else if (nextStatus === "COMPLETED") {
@@ -179,6 +188,7 @@ export default function HospitalRequests() {
         );
       } else {
         toast.error("Unsupported action");
+        setActionsLocked(false);
         return;
       }
 
@@ -199,7 +209,46 @@ export default function HospitalRequests() {
     } catch (error) {
       console.error("Error updating request status:", error);
       toast.error("Failed to update request status");
+    } finally {
+      setActionsLocked(false);
     }
+  };
+
+  const handleRejectWithReason = async (rejectionReason) => {
+    if (!rejectionModal.request) return;
+
+    setActionsLocked(true);
+    try {
+      const response = await rejectBloodRequest(
+        rejectionModal.request._id,
+        { rejectionReason },
+        token
+      );
+
+      if (response.data?.success) {
+        const updatedRequest = response.data?.data;
+        setRequests((prev) =>
+          prev.map((req) =>
+            req._id === rejectionModal.request._id ? updatedRequest : req
+          )
+        );
+        toast.success("Request rejected successfully");
+        setRejectionModal({ isOpen: false, request: null });
+        fetchRequests();
+      } else {
+        toast.error(response.data?.message || "Failed to reject request");
+      }
+    } catch (error) {
+      console.error("Error rejecting request:", error);
+      toast.error("Error rejecting request");
+    } finally {
+      setActionsLocked(false);
+    }
+  };
+
+  const handleViewDetails = (requestId) => {
+    setSelectedRequestId(requestId);
+    setDetailsModalOpen(true);
   };
 
   if (loading) {
@@ -215,7 +264,8 @@ export default function HospitalRequests() {
 
 
   return (
-    <section className="space-y-6 rounded-3xl border border-white/80 bg-white/95 p-6 shadow-[0_25px_60px_rgba(241,122,146,0.18)]">
+    <>
+      <section className="space-y-6 rounded-3xl border border-white/80 bg-white/95 p-6 shadow-[0_25px_60px_rgba(241,122,146,0.18)]">
       <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <p className="text-xs uppercase tracking-[0.4em] text-[#ff4d6d]">
@@ -324,6 +374,14 @@ export default function HospitalRequests() {
                 </td>
                 <td className="px-6 py-4">
                   <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={() => handleViewDetails(req._id)}
+                      className="rounded-full border border-blue-200 px-4 py-1 text-xs font-semibold text-[#0f6fa6] transition hover:bg-blue-50"
+                      title="View full request details"
+                    >
+                      Details
+                    </button>
+                    
                     {req.status === "PENDING" && (
                       <>
                         <button
@@ -365,5 +423,25 @@ export default function HospitalRequests() {
         </table>
       </div>
     </section>
+
+    {/* Request Detail Modal */}
+    <RequestDetailModal
+      isOpen={detailsModalOpen}
+      onClose={() => {
+        setDetailsModalOpen(false);
+        setSelectedRequestId(null);
+      }}
+      requestId={selectedRequestId}
+      token={token}
+    />
+
+    {/* Rejection Reason Modal */}
+    <RejectionReasonModal
+      isOpen={rejectionModal.isOpen}
+      onClose={() => setRejectionModal({ isOpen: false, request: null })}
+      onConfirm={handleRejectWithReason}
+      requestCode={rejectionModal.request?.requestCode || "N/A"}
+    />
+    </>
   );
 }

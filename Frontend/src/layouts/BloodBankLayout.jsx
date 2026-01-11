@@ -13,6 +13,7 @@ import {
 const navItems = [
   { label: "Dashboard Overview", path: "/bloodbank/overview" },
   { label: "Hospital Requests", path: "/bloodbank/hospital-requests" },
+  { label: "🚨 Priority Queue", path: "/bloodbank/priority-queue" }, // Round 2: New
   { label: "NGO Drives", path: "/bloodbank/ngo-drives" },
   { label: "Blood Stock", path: "/bloodbank/blood-stock" },
   { label: "Admin Messages", path: "/bloodbank/admin-messages" },

@@ -36,6 +36,7 @@ export default function SuperAdminLayout() {
 
   const menuItems = [
     { name: 'Dashboard', path: '/superadmin/dashboard', icon: LayoutDashboard },
+    { name: 'Priority Queue', path: '/superadmin/priority-queue', icon: Bell }, // Round 2: New
     { name: 'Hospitals', path: '/superadmin/hospitals', icon: Building2 },
     { name: 'NGOs', path: '/superadmin/ngos', icon: Heart },
     { name: 'Blood Banks', path: '/superadmin/blood-banks', icon: Droplet },
