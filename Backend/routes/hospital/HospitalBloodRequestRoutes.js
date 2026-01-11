@@ -13,6 +13,13 @@ const router = express.Router();
 router.post("/", HospitalBloodRequestController.createRequest);
 
 /**
+ * @route   GET /api/hospital-blood-requests/blood-stock/:bloodBankId
+ * @desc    Get blood stock availability for a blood bank
+ * @access  Hospital
+ */
+router.get("/blood-stock/:bloodBankId", HospitalBloodRequestController.getBloodStockAvailability);
+
+/**
  * @route   GET /api/hospital-blood-requests/critical
  * @desc    Get critical/urgent requests
  * @access  Hospital/Blood Bank

@@ -248,3 +248,19 @@ export const getCompletedHospitalRequests = (hospitalId, token) =>
  */
 export const getCriticalHospitalRequests = (hospitalId, token) =>
   getHospitalBloodRequests(hospitalId, { urgency: 'CRITICAL' }, token);
+// ============= BLOOD STOCK AVAILABILITY =============
+
+/**
+ * Get blood stock availability for a specific blood bank
+ * GET /api/hospital-blood-requests/blood-stock/:bloodBankId
+ * 
+ * @param {string} bloodBankId - Blood bank ID
+ * @param {string} token - Hospital JWT token
+ * @returns {Promise} - { availability: { "O+": 10, "A+": 5, ... }, totalUnitsAvailable: 50, lastUpdated: date }
+ */
+export const getBloodStockAvailability = (bloodBankId, token) =>
+  axios.get(`${API_BASE}/hospital-blood-requests/blood-stock/${bloodBankId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
