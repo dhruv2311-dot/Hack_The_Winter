@@ -107,6 +107,11 @@ export class HospitalController {
                 });
             }
 
+            console.log(`[BLOOD_SEARCH] ========== NEW SEARCH ==========`);
+            console.log(`[BLOOD_SEARCH] Blood Type: ${bloodType}, Radius: ${radius}km`);
+            console.log(`[BLOOD_SEARCH] Hospital Location: [${longitude}, ${latitude}]`);
+            console.log(`[BLOOD_SEARCH] City: ${city || 'Not provided'}`);
+
             // 1. Search Organizations (Blood Banks)
             // Note: Organization search currently relies on City matching. 
             // In the future, this could be upgraded to geospatial search as well.
@@ -120,10 +125,12 @@ export class HospitalController {
             );
 
             let source = 'bloodbank';
+            console.log(`[BLOOD_SEARCH] Blood Bank Results: ${results.length}`);
 
             // 2. If no organizations found, search Donors
             if (results.length === 0) {
-                console.log(`[BLOOD_SEARCH] No organizations found for ${bloodType}. Searching donors...`);
+                console.log(`[BLOOD_SEARCH] ========== DONOR SEARCH TRIGGERED ==========`);
+                console.log(`[BLOOD_SEARCH] No blood banks found for ${bloodType}. Searching donors...`);
                 const db = getDB();
 
                 let donorQuery = { bloodGroup: bloodType };
@@ -140,7 +147,8 @@ export class HospitalController {
 
                     const searchRadiusKm = parseInt(radius) || 5;
                     const searchRadiusMeters = searchRadiusKm * 1000;
-                    console.log(`[BLOOD_SEARCH] Using Geospatial Search. Center: [${longitude}, ${latitude}], Radius: ${searchRadiusKm}km`);
+                    console.log(`[BLOOD_SEARCH] Using Geospatial Search for Donors`);
+                    console.log(`[BLOOD_SEARCH] Center: [${longitude}, ${latitude}], Radius: ${searchRadiusKm}km (${searchRadiusMeters}m)`);
 
                     donorQuery.location = {
                         $near: {
@@ -160,9 +168,12 @@ export class HospitalController {
                     donorQuery.city = new RegExp(city, "i");
                 }
 
+                console.log(`[BLOOD_SEARCH] Donor Query:`, JSON.stringify(donorQuery));
+
                 // Execute Query with Safe Fallback
                 try {
                     results = await db.collection("donors").find(donorQuery).toArray();
+                    console.log(`[BLOOD_SEARCH] ✅ Donor Query Successful: Found ${results.length} donors`);
                 } catch (queryError) {
                     if (usedGeo) {
                         console.warn("Donor Geospatial Query failed (likely index issue). Falling back to City Search.", queryError.message);
@@ -180,8 +191,11 @@ export class HospitalController {
                 }
 
                 source = 'donor';
-                console.log(`[BLOOD_SEARCH] Found ${results.length} donors.`);
+                console.log(`[BLOOD_SEARCH] Final Donor Count: ${results.length}`);
             }
+
+            console.log(`[BLOOD_SEARCH] ========== SEARCH COMPLETE ==========`);
+            console.log(`[BLOOD_SEARCH] Source: ${source}, Results: ${results.length}`);
 
             res.status(200).json({
                 success: true,
