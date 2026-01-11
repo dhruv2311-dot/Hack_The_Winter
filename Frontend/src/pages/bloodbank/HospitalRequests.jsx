@@ -7,6 +7,7 @@ import {
   completeBloodRequest,
 } from "../../services/hospitalBloodRequestApi";
 import { getHospitalById } from "../../services/hospitalApi";
+import RequestDetailModal from "../../components/RequestDetailModal";
 import toast from "react-hot-toast";
 import { getVerificationStatusLabel } from "../../utils/organizationStatus";
 
@@ -50,11 +51,14 @@ export default function HospitalRequests() {
   const [hospitalNames, setHospitalNames] = useState({});
   const [requestStatusFilter, setRequestStatusFilter] = useState("ALL");
   const [requestUrgencyFilter, setRequestUrgencyFilter] = useState("ALL");
+  const [selectedRequestId, setSelectedRequestId] = useState(null);
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
 
   const { organization, isVerified } = useOutletContext() || {};
   const verificationStatus =
     getVerificationStatusLabel(organization) || (isVerified ? "VERIFIED" : "PENDING");
   const actionsLocked = !isVerified;
+  const token = localStorage.getItem("token");
 
   useEffect(() => {
     fetchRequests();
@@ -202,6 +206,11 @@ export default function HospitalRequests() {
     }
   };
 
+  const handleViewDetails = (requestId) => {
+    setSelectedRequestId(requestId);
+    setDetailsModalOpen(true);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -215,7 +224,8 @@ export default function HospitalRequests() {
 
 
   return (
-    <section className="space-y-6 rounded-3xl border border-white/80 bg-white/95 p-6 shadow-[0_25px_60px_rgba(241,122,146,0.18)]">
+    <>
+      <section className="space-y-6 rounded-3xl border border-white/80 bg-white/95 p-6 shadow-[0_25px_60px_rgba(241,122,146,0.18)]">
       <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <p className="text-xs uppercase tracking-[0.4em] text-[#ff4d6d]">
@@ -324,6 +334,14 @@ export default function HospitalRequests() {
                 </td>
                 <td className="px-6 py-4">
                   <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={() => handleViewDetails(req._id)}
+                      className="rounded-full border border-blue-200 px-4 py-1 text-xs font-semibold text-[#0f6fa6] transition hover:bg-blue-50"
+                      title="View full request details"
+                    >
+                      Details
+                    </button>
+                    
                     {req.status === "PENDING" && (
                       <>
                         <button
@@ -365,5 +383,17 @@ export default function HospitalRequests() {
         </table>
       </div>
     </section>
+
+    {/* Request Detail Modal */}
+    <RequestDetailModal
+      isOpen={detailsModalOpen}
+      onClose={() => {
+        setDetailsModalOpen(false);
+        setSelectedRequestId(null);
+      }}
+      requestId={selectedRequestId}
+      token={token}
+    />
+    </>
   );
 }
